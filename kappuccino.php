@@ -18,10 +18,10 @@ if('' === $host){
 	define('DB_PASSWORD',   '');
 	define('DB_HOST',       'localhost');
 	define('WP_DEBUG',      true);
-}else{
+}
 
 // Prod
-if('' === $host){
+else{
 	define('DB_NAME',       '');
 	define('DB_USER',       '');
 	define('DB_PASSWORD',   '');
