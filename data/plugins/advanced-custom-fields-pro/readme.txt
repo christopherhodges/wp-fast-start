@@ -107,6 +107,23 @@ http://support.advancedcustomfields.com/
 
 == Changelog ==
 
+= 5.2.0 =
+* Taxonomy field: Fixed bug where term relationships were not saved when using the `update_field()` function
+* Taxonomy field: Added compatibility for upcoming 'term splitting' in WP 4.2
+* Image field: Fixed bug causing 'Uploaded to post' setting to not filter the medial library
+* Gallery field: Added 'attachment_fields_to_save' filter for 3rd party custom field support
+* Field group: Added new location rule 'Current User'
+* Field group: Renamed location rule 'Logged in User Type' to 'Current User Role'
+* Field group: Removed location group 'Basic' and moved location rule 'Post Type' into group 'Posts'
+* Core: Fixed bug where postbox would disappear after save
+* Core: Fixes bug where sub fields are duplicated during sync
+* Core: Minor fixes and improvements
+* Language: Updated German translation - thanks to Ralf Koller
+* Language: Updated Dutch translation - thanks to Patrick Heiloo
+
+= 5.1.9.1 =
+* Language: Fixed corrupt language files
+
 = 5.1.9 =
 * Image field: Added new settings to restrict uploads (width, height, size, type)
 * File field: Same as above

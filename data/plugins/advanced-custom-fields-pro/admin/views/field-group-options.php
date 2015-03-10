@@ -81,7 +81,7 @@
 		// hide on screen
 		acf_render_field_wrap(array(
 			'label'			=> __('Hide on screen','acf'),
-			'instructions'	=> __('<b>Select</b> items to <b>hide</b> them from the edit screen','acf') . '</p><p>' . __("If multiple field groups appear on an edit screen, the first field group's options will be used. (the one with the lowest order number)",'acf'),
+			'instructions'	=> __('<b>Select</b> items to <b>hide</b> them from the edit screen.','acf') . '<br /><br />' . __("If multiple field groups appear on an edit screen, the first field group's options will be used. (the one with the lowest order number)",'acf'),
 			'type'			=> 'checkbox',
 			'name'			=> 'hide_on_screen',
 			'prefix'		=> 'acf_field_group',

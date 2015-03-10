@@ -2335,7 +2335,7 @@ console.time("acf_test_ready");
 			'ready': 'onReady'
 		},
 		
-		o : {
+		o: {
 			action 			: 'acf/post/get_field_groups',
 			post_id			: 0,
 			page_template	: 0,
@@ -2362,7 +2362,7 @@ console.time("acf_test_ready");
 		onReady : function(){
 			
 			// bail early if ajax is disabled
-			if( ! acf.get('ajax') ) {
+			if( !acf.get('ajax') ) {
 			
 				return false;
 				
@@ -2438,22 +2438,29 @@ console.time("acf_test_ready");
 				
 				
 				// replace HTML if needed
-				$el.find('.acf-replace-with-fields').each(function(){
+				var $replace = $el.find('.acf-replace-with-fields');
+				
+				if( $replace.exists() ) {
 					
-					$(this).replaceWith( field_group.html );
+					$replace.replaceWith( field_group.html );
 					
 					acf.do_action('append', $el);
 					
-				});
+				}
 				
 				
 				// update style if needed
-				if( k === 0 )
-				{
+				if( k === 0 ) {
+					
 					$('#acf-style').html( field_group.style );
+					
 				}
 				
 			});
+			
+			
+			// trigger click on 'Show on screen' to save states
+			$('#adv-settings input:first').trigger('click');
 			
 		},
 		
@@ -4261,6 +4268,18 @@ console.time("acf_test_ready");
 			var self = this;
 			
 			
+			// vars
+			var post_id = acf.get('post_id');
+			
+			
+			// validate post_id
+			if( !$.isNumeric(post_id) ) {
+				
+				post_id = null;
+				
+			}
+			
+			
 			// defaults
 			var defaults = {
 				mode:		'select',	// 'upload'|'edit'
@@ -4274,7 +4293,7 @@ console.time("acf_test_ready");
 			};
 			
 			
-			// vars
+			// args
 			args = $.extend({}, defaults, args);
 			
 			
@@ -4287,22 +4306,26 @@ console.time("acf_test_ready");
 			};
 			
 			
-			// add library
+			// type
 			if( args.type ) {
 				
-				options.library = {
-					type: args.type
-				};
+				options.library.type = args.type;
 				
 			}
 			
 			
-			// limit query
+			// edit mode
 			if( args.mode == 'edit' ) {
 				
-				options.library = {
-					post__in: [args.id]
-				};
+				options.library.post__in = [args.id];
+				
+			}
+			
+			
+			// uploadedTo
+			if( args.library == 'uploadedTo' ) {
+				
+				options.library.uploadedTo = post_id;
 				
 			}
 			
@@ -4479,9 +4502,7 @@ console.time("acf_test_ready");
 				
 				
 				// uploaded to post
-				var post_id = acf.get('post_id');
-				
-				if( args.library == 'uploadedTo' && $.isNumeric(post_id) ) {
+				if( args.library == 'uploadedTo' && post_id ) {
 					
 					// remove some filters
 					delete filters.filters.unattached;
@@ -4626,8 +4647,6 @@ console.time("acf_test_ready");
 				frame.open();
 				
 			}, 1);
-			
-			
 			
 			
 			// return
@@ -6939,16 +6958,13 @@ ed.on('ResizeEditor', function(e) {
 				var ed = tinyMCE.get( this.o.id )
 					
 				
+				// save
 				ed.save();
 				
-				var val = this.$textarea.get(0).value;
 				
 				// destroy editor
 				ed.destroy();
-				
-				this.$textarea.get(0).value = val;
-				
-				
+								
 			} catch(e) {}
 			
 		},
@@ -6956,11 +6972,11 @@ ed.on('ResizeEditor', function(e) {
 		enable: function(){
 			
 			// bail early if html mode
-			if( this.$el.hasClass('tmce-active') ) {
+			if( this.$el.hasClass('tmce-active') && acf.isset(window,'switchEditors') ) {
 				
-				this.$el.find('.switch-tmce').trigger('click');
+				switchEditors.go( this.o.id, 'tmce');
 				
-			}			
+			}
 			
 		},
 		

@@ -337,20 +337,18 @@ class acf_compatibility {
 	
 	function get_valid_field_group( $field_group ) {
 		
-		// bail ealry if field group contains key ( is ACF5 )
-		if( !empty($field_group['key']) ) {
-			
-			return $field_group;
-			
-		}
-		
-		
 		// global
 		global $wpdb;
 		
 		
-		// add missing key
-		$field_group['key'] = empty($field_group['id']) ? uniqid('group_') : 'group_' . $field_group['id'];
+		// add missing 'key' if $field group is from a version prioir to 5.0.0
+		if( empty($field_group['key']) ) {
+			
+			// add missing key
+			$field_group['key'] = empty($field_group['id']) ? uniqid('group_') : 'group_' . $field_group['id'];
+			
+		}
+		
 		
 		// extract options
 		if( !empty($field_group['options']) ) {
@@ -414,6 +412,7 @@ class acf_compatibility {
 		 		'ef_media'		=> 'attachment',
 		 		'ef_taxonomy'	=> 'taxonomy',
 		 		'ef_user'		=> 'user_role',
+		 		'user_type'		=> 'current_user_role' // 5.2.0
 		 	);
 		 	
 		 	
@@ -501,6 +500,7 @@ class acf_compatibility {
 		
 		//return
 		return $field_group;
+		
 	}
 	
 }
