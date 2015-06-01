@@ -1,11 +1,12 @@
 <?php
+
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 // Plugin information
-define( 'CPAC_VERSION', 	 	'2.3.4' ); // Current plugin version
+define( 'CPAC_VERSION', 	 	'2.4.2' ); // Current plugin version
 define( 'CPAC_UPGRADE_VERSION', '2.0.0' ); // Latest version which requires an upgrade
 define( 'CPAC_URL', 			plugin_dir_url( __FILE__ ) );
 define( 'CPAC_DIR', 			plugin_dir_path( __FILE__ ) );
@@ -94,6 +95,10 @@ class CPAC {
 		// Upgrade
 		require_once CPAC_DIR . 'classes/upgrade.php';
 		$this->_upgrade = new CPAC_Upgrade( $this );
+
+		// Settings
+		include_once CPAC_DIR . 'classes/review_notice.php';
+		new CPAC_Review_Notice( $this );
 	}
 
 	/**
@@ -127,10 +132,12 @@ class CPAC {
 	 */
 	public function scripts() {
 
-		wp_register_script( 'cpac-admin-columns', CPAC_URL . 'assets/js/admin-columns.js', array( 'jquery', 'jquery-qtip2' ), CPAC_VERSION );
-		wp_register_script( 'jquery-qtip2', CPAC_URL . 'external/qtip2/jquery.qtip.min.js', array( 'jquery' ), CPAC_VERSION );
-		wp_register_style( 'jquery-qtip2', CPAC_URL . 'external/qtip2/jquery.qtip.min.css', array(), CPAC_VERSION, 'all' );
-		wp_register_style( 'cpac-columns', CPAC_URL . 'assets/css/column.css', array(), CPAC_VERSION, 'all' );
+		$minified = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
+
+		wp_register_script( 'cpac-admin-columns', CPAC_URL . "assets/js/admin-columns{$minified}.js", array( 'jquery', 'jquery-qtip2' ), CPAC_VERSION );
+		wp_register_script( 'jquery-qtip2', CPAC_URL . "external/qtip2/jquery.qtip{$minified}.js", array( 'jquery' ), CPAC_VERSION );
+		wp_register_style( 'jquery-qtip2', CPAC_URL . "external/qtip2/jquery.qtip{$minified}.css", array(), CPAC_VERSION, 'all' );
+		wp_register_style( 'cpac-columns', CPAC_URL . "assets/css/column{$minified}.css", array(), CPAC_VERSION, 'all' );
 
 		if ( $this->is_columns_screen() ) {
 			add_filter( 'admin_body_class', array( $this, 'admin_class' ) );
@@ -370,38 +377,35 @@ class CPAC {
 	 */
 	public function admin_scripts() {
 
+		if ( ! ( $storage_model = $this->get_current_storage_model() ) ) {
+			return;
+		}
+
 		$css_column_width 	= '';
 		$edit_link 			= '';
 
-		if ( $this->storage_models ) {
-			foreach ( $this->storage_models as $storage_model ) {
+		// CSS: columns width
+		if ( $columns = $storage_model->get_stored_columns() ) {
+			foreach ( $columns as $name => $options ) {
 
-				if ( ! $storage_model->is_columns_screen() ) {
-					continue;
+				if ( ! empty( $options['width'] ) && is_numeric( $options['width'] ) && $options['width'] > 0 ) {
+					$unit = isset( $options['width_unit'] ) ? $options['width_unit'] : '%';
+					$css_column_width .= ".cp-{$storage_model->key} .wrap table th.column-{$name} { width: {$options['width']}{$unit} !important; }";
 				}
 
-				// CSS: columns width
-				if ( $columns = $storage_model->get_stored_columns() ) {
-					foreach ( $columns as $name => $options ) {
-
-						if ( ! empty( $options['width'] ) && is_numeric( $options['width'] ) && $options['width'] > 0 ) {
-							$css_column_width .= ".cp-{$storage_model->key} .wrap table th.column-{$name} { width: {$options['width']}% !important; }";
-						}
-
-						// Load custom column scripts, used by 3rd party columns
-						if ( $column = $storage_model->get_column_by_name( $name ) ) {
-							$column->scripts();
-						}
-					}
-				}
-
-				// JS: edit button
-				$general_options = get_option( 'cpac_general_options' );
-				if ( current_user_can( 'manage_admin_columns' ) && ( ! isset( $general_options['show_edit_button'] ) || '1' === $general_options['show_edit_button'] ) ) {
-					$edit_link = $storage_model->get_edit_link();
+				// Load custom column scripts, used by 3rd party columns
+				if ( $column = $storage_model->get_column_by_name( $name ) ) {
+					$column->scripts();
 				}
 			}
 		}
+
+		// JS: edit button
+		$general_options = get_option( 'cpac_general_options' );
+		if ( current_user_can( 'manage_admin_columns' ) && ( ! isset( $general_options['show_edit_button'] ) || '1' === $general_options['show_edit_button'] ) ) {
+			$edit_link = $storage_model->get_edit_link();
+		}
+
 		?>
 		<?php if ( $css_column_width ) : ?>
 		<style type="text/css">
@@ -417,6 +421,13 @@ class CPAC {
 		<?php endif; ?>
 
 		<?php
+
+		/**
+		 * Add header scripts that only apply to column screens.
+		 * @since 2.3.5
+		 * @param object CPAC Main Class
+		 */
+		do_action( 'cac/admin_head', $storage_model, $this );
 	}
 
 	/**
@@ -458,13 +469,18 @@ class CPAC {
 	 * Whether the current screen is the Admin Columns settings screen
 	 *
 	 * @since 2.2
+	 * @param strong $tab Specifies a tab screen (optional)
 	 * @return bool True if the current screen is the settings screen, false otherwise
 	 */
-	public function is_settings_screen() {
+	public function is_settings_screen( $tab = '' ) {
 
 		global $pagenow;
 
 		if ( ! ( 'options-general.php' === $pagenow && isset( $_GET['page'] ) && ( 'codepress-admin-columns' === $_GET['page'] ) ) ) {
+			return false;
+		}
+
+		if ( $tab && ( empty( $_GET['tab'] ) || ( isset( $_GET['tab'] ) && $tab !== $_GET['tab'] ) ) ) {
 			return false;
 		}
 

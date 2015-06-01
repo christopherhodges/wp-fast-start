@@ -27,7 +27,7 @@ class CACIE_ACF_FieldOptions {
 	 */
 	public function get_field_options( $field ) {
 
-		if ( ! in_array( $field['type'], array( 'checkbox', 'page_link', 'post_object', 'radio', 'relationship', 'select', 'taxonomy', 'true_false' ) ) ) {
+		if ( ! in_array( $field['type'], array( 'checkbox', 'page_link', 'post_object', 'radio', 'relationship', 'select', 'taxonomy' ) ) ) {
 			return false;
 		}
 

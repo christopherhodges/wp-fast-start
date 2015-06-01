@@ -92,7 +92,7 @@ class CAC_Export_Import {
 								<ol>
 									<li><?php _e( 'Copy the generated PHP code in the right column', 'cpac' ); ?></li>
 									<li><?php _e( 'Insert the code in your themes functions.php or in your plugin (on the init action)', 'cpac' ); ?></li>
-									<li><?php _e( 'Your columns settings are now loaded from your PHP code instead of from your column settings!', 'cpac' ); ?></li>
+									<li><?php _e( 'Your columns settings are now loaded from your PHP code instead of from your stored settings!', 'cpac' ); ?></li>
 								</ol>
 							</div>
 						</th>
@@ -167,7 +167,7 @@ class CAC_Export_Import {
 							<li><?php _e( 'Click the &quot;Export to PHP&quot; button', 'cpac' ); ?></li>
 							<li><?php _e( 'Copy the generated PHP code in the right column', 'cpac' ); ?></li>
 							<li><?php _e( 'Insert the code in your themes functions.php or in your plugin (on the init action)', 'cpac' ); ?></li>
-							<li><?php _e( 'Your columns settings are now loaded from your PHP code instead of from your column settings!', 'cpac' ); ?></li>
+							<li><?php _e( 'Your columns settings are now loaded from your PHP code instead of from your stored settings!', 'cpac' ); ?></li>
 						</ol>
 					</td>
 				</tr>

@@ -117,6 +117,11 @@ class CAC_Addon_Pro {
 		if ( ! class_exists('CACIE_Addon_InlineEdit') ) {
 			include_once 'classes/inline-edit/cac-addon-inline-edit.php';
 		}
+
+		if ( ! class_exists('CACIE_Addon_Columns') ) {
+			// @todo: move pro columns here
+			//include_once 'classes/columns/cac-addon-columns.php';
+		}
 	}
 
 	/**

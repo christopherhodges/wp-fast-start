@@ -241,7 +241,7 @@ abstract class CAC_Sortable_Model {
 	 * @param array &$vars
 	 * @param string $type
 	 */
-	protected function apply_sorting_preference( &$vars ) {
+	protected function apply_sorting_preference( $vars ) {
 
 		$type = $this->storage_model->key;
 
@@ -359,69 +359,6 @@ abstract class CAC_Sortable_Model {
 
         return $post_ids;
 	}
-
-    /**
-     * Adds the clauses needed to sort on comment count per user
-     *
-     * @since 3.4
-     * @return array
-     */
-    public function get_users_sorted_by_comment_count_clauses( $clauses ) {
-        global $wpdb;
-
-        $column = "{$wpdb->comments}.user_id";
-
-        // @todo: check if this is safe to use with other plugins
-        $clauses['orderby'] = 'comment_count';
-        $clauses['fields']  = "{$column}, COUNT({$column}) AS comment_count";
-        $clauses['groupby'] = $column;
-        $clauses['where']   = "{$column} <> 0";
-
-        return $clauses;
-    }
-
-    /**
-     * Does what it says
-     *
-     * @since 3.4
-     * @return array
-     */
-    public function get_users_sorted_by_comment_count( $vars ) {
-
-        $comment_query = new WP_Comment_Query();
-
-        // @todo: need to check if we need all comments or that a slice is enough here to make the processing afterwards more easy by PHP
-        add_filter( 'comments_clauses', array( $this, 'get_users_sorted_by_comment_count_clauses') );
-        $raw_results = $comment_query->query( array() );
-        remove_filter( 'comments_clauses', array( $this, 'get_users_sorted_by_comment_count_clauses') );
-
-        $_users = array();
-
-        // @todo can PHP do this more native?
-        foreach( $raw_results as $raw_result ) {
-            $_users[ $raw_result->user_id ] = $raw_result->comment_count;
-        }
-
-        // get rest of users (withouth a comment)
-        if ( $this->show_all_results ) {
-            $user_query = new WP_User_Query( array(
-                'exclude' => array_keys( $_users ),
-                'fields' => 'ids', // WP 4.0 is required
-                '_cpac_is_subquery' => 1,
-            ) );
-
-            $users = array_fill_keys( (array) $user_query->get_results(), null );
-
-            // merge users with and without comment
-            if ( 'DESC' == $vars['order'] ) {
-                $_users = $users + $_users;
-            } else {
-                $_users += $users;
-            }
-        }
-
-        return $_users;
-    }
 
 	/**
 	 * Get posts sorted by taxonomy

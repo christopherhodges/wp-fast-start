@@ -162,7 +162,9 @@ class CPAC_Column_Custom_Field extends CPAC_Column {
 		if ( $ids = $this->get_ids_from_meta( $meta ) ) {
 			foreach ( (array) $ids as $id ) {
 
-				if ( ! is_numeric( $id ) ) continue;
+				if ( ! is_numeric( $id ) ) {
+					continue;
+				}
 
 				$link = get_edit_post_link( $id );
 				if ( $title = get_the_title( $id ) )
@@ -311,7 +313,6 @@ class CPAC_Column_Custom_Field extends CPAC_Column {
 	 */
 	public function get_meta_by_id( $id ) {
 
-		// get metadata
 		$meta = $this->get_raw_value( $id );
 
 		// try to turn any array into a comma seperated string for further use
@@ -319,7 +320,7 @@ class CPAC_Column_Custom_Field extends CPAC_Column {
 			$meta = $this->recursive_implode( ', ', $meta );
 		}
 
-		if ( ! is_string( $meta ) ) {
+		if ( ! is_string( $meta ) && ! is_numeric( $meta ) ) {
 			return false;
 		}
 
@@ -350,8 +351,6 @@ class CPAC_Column_Custom_Field extends CPAC_Column {
 		$value = '';
 
 		if ( $meta = $this->get_meta_by_id( $id ) ) {
-
-			// get value by meta
 			$value = $this->get_value_by_meta( $meta, $id );
 		}
 
@@ -395,14 +394,14 @@ class CPAC_Column_Custom_Field extends CPAC_Column {
 				<?php endforeach; ?>
 				</select>
 				<?php else : ?>
-					<?php _e( 'No custom fields available.', 'cpac' ); ?>
+					<?php _e( 'No custom fields available.', 'cpac' ); ?> <?php printf( __( 'Please create a %s item first.', 'cpac' ), '<em>' . $this->storage_model->singular_label . '</em>' ); ?>
 				<?php endif; ?>
 
 			</td>
 		</tr>
 
 		<tr class="column_field_type">
-			<?php $this->label_view( __( "Field Type", 'cpac' ), __( 'This will determine how the value will be displayed.', 'cpac' ), 'field_type' ); ?>
+			<?php $this->label_view( __( "Field Type", 'cpac' ), __( 'This will determine how the value will be displayed.', 'cpac' ) . '<em>' . __( 'Type', 'cpac' ) . ': ' . $this->options->field_type . '</em>', 'field_type' ); ?>
 			<td class="input">
 				<select name="<?php $this->attr_name( 'field_type' ); ?>" id="<?php $this->attr_id( 'field_type' ); ?>">
 				<?php foreach ( $this->get_custom_field_types() as $fieldkey => $fieldtype ) : ?>

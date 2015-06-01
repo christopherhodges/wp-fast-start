@@ -42,6 +42,12 @@ if ( ! class_exists( 'Codepress_Licence_Manager_Settings' ) ) {
 			// Add notifications to the plugin screen
 			add_action( 'after_plugin_row_' . $this->basename, array( $this, 'display_plugin_row_notices' ), 11 );
 
+			// Add notice for license expiry
+			add_action( 'all_admin_notices', array( $this, 'display_license_expiry_notices' ) );
+
+			// Check for notice hide request
+			add_action( 'wp_ajax_cpac_hide_license_expiry_notice', array( $this, 'ajax_hide_license_expiry_notice' ) );
+
 			// Adds notice to update message that a licence is needed
 			add_action( 'in_plugin_update_message-' . $this->basename, array( $this, 'need_license_message' ), 10, 2 );
 
@@ -50,6 +56,35 @@ if ( ! class_exists( 'Codepress_Licence_Manager_Settings' ) ) {
 
 			// check for a secure connection
 			add_action( 'wp_ajax_cpac_check_connection', array( $this, 'ajax_check_connection' ) );
+
+			// check license has been renewed
+			add_action( 'wp_ajax_cpac_check_license_renewed', array( $this, 'ajax_check_license_renewed' ) );
+
+			// check subscription renewal status once every week
+			add_action( 'shutdown', array( $this, 'do_weekly_renewal_check' ) );
+		}
+
+		/**
+		 * @since 3.4.3
+		 */
+		public function ajax_check_license_renewed() {
+			$this->update_license_details(); // update reneweal date
+
+			$phases = $this->get_hide_license_notice_thresholds();
+
+			echo ( $this->get_days_to_expiry() <= $phases[ count( $phases ) - 1 ] ) ? '0' : '1'; // check for renewal threshold
+			exit;
+		}
+
+		/**
+		 * @since 3.4.3
+		 */
+		public function do_weekly_renewal_check() {
+			if ( get_transient( '_cpac_renewal_check' ) ) {
+				return;
+			}
+			$this->update_license_details();
+			set_transient( '_cpac_renewal_check', 1, 3600 * 24 * 7 ); // 7 day interval
 		}
 
 		/**
@@ -81,7 +116,7 @@ if ( ! class_exists( 'Codepress_Licence_Manager_Settings' ) ) {
 		 */
 		public function maybe_install_error( $error, $plugin_name ) {
 
-			if ( ! $this->get_licence_status() ) {
+			if ( ! $this->is_license_active() ) {
 				$error = sprintf( __( "Licence not active. Enter your licence key under the <a href='%s'>Settings tab</a>.", 'cpac' ), $this->cpac->settings()->get_settings_url('settings') );
 			}
 
@@ -153,7 +188,7 @@ if ( ! class_exists( 'Codepress_Licence_Manager_Settings' ) ) {
 			return $install_data;
 		}
 
-	    /**
+		/**
 		 * Handle requests for license activation and deactivation
 		 *
 		 * @since 1.0
@@ -240,7 +275,21 @@ if ( ! class_exists( 'Codepress_Licence_Manager_Settings' ) ) {
 		 * @since 1.0
 		 * @return void
 		 */
-		function display() {
+		public function display() {
+
+			// Display message on multisite
+			if ( is_multisite() && is_plugin_active_for_network( plugin_basename( ACP_FILE ) ) && ! is_main_site() ) {
+				$settings_url = get_admin_url( get_current_site()->blog_id, 'options-general.php?page=codepress-admin-columns&tab=settings' )
+				?>
+				<p>
+					<?php _e( 'This plugin has been network activated.', 'cpac' ); ?>
+				<?php if ( current_user_can( 'manage_network_options' ) ) : ?>
+					<?php printf( __( 'Go to <a href="%s">network settings</a>.', 'cpac' ), $settings_url ); ?>
+				<?php endif; ?>
+				</p>
+				<?php
+				return;
+			}
 
 			// Use this hook when you want to hide to licence form
 			if ( ! apply_filters( 'cac/display_licence/addon=' . $this->option_key , true ) ) {
@@ -248,13 +297,11 @@ if ( ! class_exists( 'Codepress_Licence_Manager_Settings' ) ) {
 			}
 
 			$licence = $this->get_licence_key();
-			$status  = $this->get_licence_status();
 
 			// on submit
 			if ( ! empty( $_POST[ $this->option_key ] ) ) {
 				$licence = $_POST[ $this->option_key ];
 			}
-
 			?>
 
 			<form id="licence_activation" action="" method="post">
@@ -263,7 +310,7 @@ if ( ! class_exists( 'Codepress_Licence_Manager_Settings' ) ) {
 				</label>
 				<br/>
 
-			<?php if ( $status ) : ?>
+			<?php if ( $this->is_license_active() ) : ?>
 
 				<?php wp_nonce_field( $this->option_key, '_wpnonce_addon_deactivate' ); ?>
 				<p>
@@ -307,54 +354,377 @@ if ( ! class_exists( 'Codepress_Licence_Manager_Settings' ) ) {
 		}
 
 		/**
+		 * Get renewal message
+		 *
+		 * @since 3.4.3
+		 */
+		private function get_renewal_message() {
+
+			$message = false;
+
+			$days_to_expiry = $this->get_days_to_expiry();
+
+			// renewal date has been set?
+			if ( $days_to_expiry !== false ) {
+				if ( $days_to_expiry > 0 ) {
+
+					if ( $days_to_expiry < 28 ) { // for plugin page
+						$days = sprintf( _n( '1 day', '%s days', $days_to_expiry, 'cpac' ), $days_to_expiry );
+						if ( $discount = $this->get_license_renewal_discount() ) {
+							$message = sprintf(
+							__( "Your Admin Columns Pro license will expire in %s. %s now and get a %d%% discount!", 'cpac' ),
+								'<strong>' . $days . '</strong>',
+								'<a href="https://admincolumns.com/my-account/">' . __( 'Renew your license', 'cpac' ) . '</a>',
+								$discount
+							);
+						}
+
+						else {
+							$message = sprintf(
+								__( "Your Admin Columns Pro license will expire in %s. %s now and get a discount!", 'cpac' ),
+								'<strong>' . $days . '</strong>',
+								'<a href="https://admincolumns.com/my-account/">' . __( 'Renew your license', 'cpac' ) . '</a>'
+							);
+						}
+					}
+				}
+				else {
+					$message = sprintf(
+						__( 'Your Admin Columns Pro license has expired on %s! Renew your license now by going to your %s.', 'cpac' ),
+						date_i18n( get_option( 'date_format' ), $this->get_license_expiry_date() ),
+						'<a href="https://admincolumns.com/my-account/">' . __( 'My Account page', 'cpac' ) . '</a>'
+					);
+				}
+			}
+
+			return $message;
+		}
+
+		/**
+		 * Get the button HTML for re-checking a license
+		 *
+		 * @since 3.4.3
+		 */
+		private function get_check_license_button() {
+
+			$check_message_success = esc_js( __( 'Your license was successfully renewed!', 'cpac' ) );
+			$check_message_error = esc_js( __( 'Your license has not been renewed yet.', 'cpac' ) );
+			?>
+			<a href="#" class="button cpac-check-license"><?php _e( 'Check my license', 'cpac' ); ?></a>
+			<script type="text/javascript">
+				if ( typeof cpac_license_check_js == 'undefined' ) {
+					var cpac_license_check_js = true;
+
+					jQuery( document ).ready( function( $ ) {
+						$( 'body' ).on( 'click', '.cpac-check-license', function( e ) {
+							if ( ! $( this ).hasClass( 'disabled' ) ) {
+								var el = $( this ).parents( 'p' );
+
+								if ( el.length == 0 ) {
+									el = $( this ).parents( '.update-message' );
+								}
+
+								$( this ).after( '<div class="spinner inline"></div>' ).show();
+								$( this ).addClass( 'disabled' );
+
+								$.post( ajaxurl, {
+									'action': 'cpac_check_license_renewed'
+								}, function( data ) {
+									el.find( '.spinner' ).hide();
+
+									if ( '1' === data ) {
+										el.parent().removeClass('error').addClass('updated');
+										el.html( '<?php echo $check_message_success; ?>' );
+									}
+									else {
+										el.parent().removeClass('warning');
+										var msg = '<?php echo $check_message_error; ?> ';
+										el.find('a.cpac-check-license').replaceWith( '<strong><?php echo $check_message_error; ?></strong>' );
+									}
+
+								} );
+							}
+
+							return false;
+						} );
+					} );
+				}
+			</script>
+			<?php
+		}
+
+		/**
 		 * Shows a message below the plugin on the plugins page
 		 *
 		 * @since 1.0.3
 		 */
 		public function display_plugin_row_notices() {
 
-			if ( $this->get_licence_status() ) {
+			if ( $this->is_license_active() ) {
+				if ( $message = $this->get_renewal_message() ) {
+					?>
+					<tr class="plugin-update-tr">
+						<td colspan="3" class="plugin-update cac-plugin-update">
+							<div class="update-message">
+								<?php echo $message; ?>
+								<?php echo $this->get_check_license_button(); ?>
+
+								<style type="text/css">
+								.cac-plugin-update .spinner.right {
+									display: block;
+									right: 8px;
+									text-decoration: none;
+									text-align: right;
+									position: absolute;
+									top: 50%;
+									margin-top: -10px;
+								}
+								.cac-plugin-update .spinner.inline {
+									display: inline-block;
+									position: absolute;
+									margin: 4px 0 0 4px;
+									padding: 0;
+									float: none;
+								}
+								.plugin-update-tr .cac-plugin-update {
+									border-left: 4px solid #2EA2CC;
+								}
+								.plugin-update-tr .cac-plugin-update .update-message {
+									margin-top: 6px;
+									line-height: 28px;
+								}
+								.plugin-update-tr .cac-plugin-update .update-message:before {
+									content: "\f348";
+									margin-top: 3px;
+								}
+								</style>
+							</div>
+						</td>
+					</tr>
+					<?php
+				}
+			}
+
+			// needs to validate license
+			else {
+				$plugin_details = $this->get_plugin_details();
+
+				$message = __( 'To finish activating Admin Columns Pro, please ', 'cpac' );
+				if ( isset( $plugin_details->version ) && version_compare( $this->get_version(), $plugin_details->version, '<' ) ) {
+					$message = __( 'To update, ', 'cpac' );
+				}
+				$message .= sprintf( __( 'go to %s and enter your licence key. If you don\'t have a licence key, you may <a href="%s" target="_blank">purchase one</a>.', 'cpac' ), sprintf( '<a href="%s">%s</a>', admin_url( 'options-general.php?page=codepress-admin-columns&tab=settings' ), __( 'Settings', 'cpac' ) ), 'https://www.admincolumns.com/' );
+
+				?>
+				<tr class="plugin-update-tr">
+					<td colspan="3" class="plugin-update cac-plugin-update">
+						<div class="update-message">
+
+							<?php echo $message; ?>
+
+							<style type="text/css">
+							.plugin-update-tr .cac-plugin-update {
+								border-left: 4px solid #2EA2CC;
+							}
+							.plugin-update-tr .cac-plugin-update .update-message {
+								margin-top: 6px;
+							}
+							.plugin-update-tr .cac-plugin-update .update-message:before {
+								content: "\f348";
+							}
+							</style>
+						</div>
+					</td>
+				</tr>
+				<?php
+			}
+		}
+
+		/**
+		 * Whether the license expiry notice should be displayed, regardless of the license timeout
+		 *
+		 * @since 3.4.3
+		 */
+		public function is_license_expiry_notice_hideable() {
+			return ( ! $this->cpac->is_settings_screen( 'settings' ) );
+		}
+
+		/**
+		 * Display notice for license expiry
+		 *
+		 * @since 3.4.3
+		 */
+		public function display_license_expiry_notices() {
+			global $pagenow;
+
+			/**
+			 * Filter the visibility of the Admin Columns renewal notice
+			 *
+			 * @since 3.4.3
+			 *
+			 * @param bool $hide Whether to hide the renewal notice. Defaults to false.
+			 */
+			if ( apply_filters( 'cac/hide_renewal_notice', false ) ) {
 				return;
 			}
 
-			$plugin_details = $this->get_plugin_details();
-
-			$message = __( 'To finish activating Admin Columns Pro, please ', 'cpac' );
-			if ( isset( $plugin_details->version ) && version_compare( $this->get_version(), $plugin_details->version, '<' ) ) {
-				$message = __( 'To update, ', 'cpac' );
+			// Check visibility based on screen
+			if ( ! $this->cpac->is_cac_screen() && $pagenow === 'plugins.php' ) {
+				return;
 			}
 
-			// multisite
-			if ( is_network_admin() ) {
-				$message .= sprintf( __( 'go to %s and enter your licence key. If you don\'t have a licence key, you may <a href="%s" target="_blank">purchase one</a>.', 'cpac' ), sprintf( '<a href="%s">%s</a>', admin_url( 'options-general.php?page=codepress-admin-columns&tab=settings' ), __( 'each subsite', 'cpac' ) ), 'https://www.admincolumns.com/' );
+			// Permissions check
+			if ( ! current_user_can( 'manage_admin_columns' ) ) {
+				return;
 			}
 
-			// single or subsite
-			else {
-				$message .= sprintf( __( 'go to %s and enter your licence key. If you don\'t have a licence key, you may <a href="%s" target="_blank">purchase one</a>.', 'cpac' ), sprintf( '<a href="%s">%s</a>', network_admin_url( 'options-general.php?page=codepress-admin-columns&tab=settings' ), __( 'Settings', 'cpac' ) ), 'https://www.admincolumns.com/' );
-			}
-			?>
-			<tr class="plugin-update-tr">
-				<td colspan="3" class="plugin-update cac-plugin-update">
-					<div class="update-message">
+			$is_settings_screen = $this->cpac->is_settings_screen();
+			$hide_license_timeout = get_user_meta( get_current_user_id(), 'cpac_hide_license_notice_timeout', true );
+			$hide_license_phase = get_user_meta( get_current_user_id(), 'cpac_hide_license_notice_phase', true );
 
+			if ( $this->is_license_expiry_notice_hideable() ) {
+				// Notice was blocked the final time
+				if ( $hide_license_phase == 'completed' ) {
+					return;
+				}
+
+				// Notice was blocked, and timeout hasn't been reached yet
+				if ( time() < $hide_license_timeout ) {
+					return;
+				}
+			}
+
+			// First license expiry threshold passed
+			$phases = $this->get_hide_license_notice_thresholds();
+
+			if ( $this->get_days_to_expiry() > $phases[ count( $phases ) - 1 ] ) {
+				return;
+			}
+
+			// Show a renewal message if the license needs renewal
+			if ( $message = $this->get_renewal_message() ) {
+				?>
+				<div class="cpac_message error warning">
+					<?php if ( $this->is_license_expiry_notice_hideable() ) : ?>
+						<a href="#" class="hide-notice"></a>
+					<?php endif; ?>
+					<p>
 						<?php echo $message; ?>
+						<?php echo $this->get_check_license_button(); ?>
+					</p>
+					<div class="clear"></div>
 
-						<style type="text/css">
-						.plugin-update-tr .cac-plugin-update {
-							border-left: 4px solid #2EA2CC;
+					<style type="text/css">
+						body .wrap .cpac_message {
+							position: relative;
+							padding-right: 40px;
 						}
-						.plugin-update-tr .cac-plugin-update .update-message {
-							margin-top: 6px;
+						.cpac_message.error.warning {
+							border-left: 4px solid #ffba00;
 						}
-						.plugin-update-tr .cac-plugin-update .update-message:before {
-							content: "\f348";
+						.cpac_message .spinner.right {
+							display: block;
+							right: 8px;
+							text-decoration: none;
+							text-align: right;
+							position: absolute;
+							top: 50%;
+							margin-top: -10px;
 						}
-						</style>
-					</div>
-				</td>
-			</tr>
-			<?php
+						.cpac_message .spinner.inline {
+							display: inline-block;
+							position: absolute;
+							margin: 4px 0 0 4px;
+							padding: 0;
+							float: none;
+						}
+						.cpac_message .hide-notice {
+							right: 8px;
+							text-decoration: none;
+							width: 32px;
+							text-align: right;
+							position: absolute;
+							top: 50%;
+							height: 32px;
+							margin-top: -16px;
+						}
+						.cpac_message .hide-notice:before {
+							display: block;
+							content: '\f335';
+							font-family: 'Dashicons';
+							margin: .5em 0;
+							padding: 2px;
+						}
+					</style>
+
+					<script type="text/javascript">
+						jQuery( function( $ ) {
+							$( document ).ready( function() {
+								$( '.cpac_message .hide-notice' ).click( function( e ) {
+									var el = $( this ).parents( '.cpac_message' );
+
+									$( this ).after( '<div class="spinner right"></div>' ).show();
+									$( this ).hide();
+
+									$.post( ajaxurl, {
+										'action': 'cpac_hide_license_expiry_notice'
+									}, function( data ) {
+										el.find( '.spinner' ).hide();
+										el.slideUp();
+									} );
+
+									return false;
+								} );
+							} );
+						} );
+					</script>
+				</div>
+				<?php
+			}
+		}
+
+		public function get_hide_license_notice_thresholds() {
+
+			return array( 0, 7, 21 );
+		}
+		/**
+		 * Handle an AJAX request for hiding license expiry notices
+		 *
+		 * @since 3.4.3
+		 */
+		public function ajax_hide_license_expiry_notice() {
+
+			$hide_license_timeout = get_user_meta( get_current_user_id(), 'cpac_hide_license_notice_timeout', true );
+			$hide_license_phase = get_user_meta( get_current_user_id(), 'cpac_hide_license_notice_phase', true );
+
+			if ( $hide_license_phase != 'completed' ) {
+				$expiry_date = $this->get_license_expiry_date();
+				$phases = $this->get_hide_license_notice_thresholds();
+				$days = $this->get_days_to_expiry();
+
+				foreach ( $phases as $phase => $threshold ) {
+					if ( $days <= $threshold ) {
+						break;
+					}
+				}
+
+				$new_phase = $phase - 1;
+
+				if ( $new_phase == -1 ) {
+					update_user_meta( get_current_user_id(), 'cpac_hide_license_notice_timeout', 0 );
+					update_user_meta( get_current_user_id(), 'cpac_hide_license_notice_phase', 'completed' );
+				}
+				else {
+					update_user_meta(
+						get_current_user_id(),
+						'cpac_hide_license_notice_timeout',
+						$expiry_date - $phases[ $new_phase ] * 86400 // Expiry date minus x days
+					);
+					update_user_meta( get_current_user_id(), 'cpac_hide_license_notice_phase', $new_phase );
+				}
+			}
+
+			wp_send_json_success();
 		}
 
 		/**

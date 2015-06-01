@@ -38,6 +38,7 @@ class CAC_Sortable_Model_User extends CAC_Sortable_Model {
 
 			// WP default columns
 			'role',
+			'posts',
 
 			// Custom Columns
 			'column-first_name',
@@ -82,6 +83,8 @@ class CAC_Sortable_Model_User extends CAC_Sortable_Model {
 	 * @return array Vars
 	 */
 	public function handle_sorting_request( $user_query ) {
+		global $wpdb;
+
 		$vars = $user_query->query_vars;
 
 		// prevent looping because this filter is trigered by get_users();
@@ -89,22 +92,14 @@ class CAC_Sortable_Model_User extends CAC_Sortable_Model {
 			return;
 		}*/
 
-		// do not allow to run this query more then once
-		if ( isset( $vars['_cpac_is_subquery'] ) ) {
-			return;
-		}
-
 		// sorting event?
 		if ( empty( $vars['orderby'] ) ) {
 			return;
 		}
 
-		// apply sorting preference
-		$this->apply_sorting_preference( $vars );
+		$vars = $this->apply_sorting_preference( $vars );
 
-		// Column
 		$column = $this->get_column_by_orderby( $vars['orderby'] );
-
 		if ( empty( $column ) ) {
 			return;
 		}
@@ -123,6 +118,13 @@ class CAC_Sortable_Model_User extends CAC_Sortable_Model {
 					if ( $role ) {
 						$_users[ $id ] = $this->prepare_sort_string_value( $role );
 					}
+				}
+				break;
+
+			case 'posts' :
+				$sort_flag = SORT_NUMERIC;
+				foreach ( $this->get_user_ids() as $id ) {
+					$_users[ $id ] = $column->get_user_postcount( $id, 'post' );
 				}
 				break;
 
@@ -162,12 +164,25 @@ class CAC_Sortable_Model_User extends CAC_Sortable_Model {
 				break;
 
 			case 'column-user_commentcount' :
-				if ( version_compare( get_bloginfo('version'), '4.0', '>=' ) ) {
-					$_users = $this->get_users_sorted_by_comment_count( $vars );
-				}
-				$sort_flag = SORT_NUMERIC;
-				break;
+				// @todo: maybe use WP_Comment_Query to generate this subquery? penalty is extra query and bloat, advantage is WP_Comment_Query filters used
+				$sub_query = "
+					LEFT JOIN (
+						SELECT user_id, COUNT(user_id) AS comment_count
+						FROM {$wpdb->comments}
+						WHERE user_id <> 0
+						GROUP BY user_id
+					) AS comments
+					ON {$wpdb->users}.ID = comments.user_id
+				";
 
+				$user_query->query_from .= $sub_query;
+				$user_query->query_orderby = "ORDER BY comment_count " . $vars['order'];
+
+				if ( ! $this->show_all_results ) {
+					$user_query->query_where .= " AND comment_count IS NOT NULL";
+				}
+
+				break;
 			case 'column-user_postcount' :
 				$sort_flag = SORT_NUMERIC;
 				foreach ( $this->get_user_ids() as $id ) {
@@ -232,8 +247,7 @@ class CAC_Sortable_Model_User extends CAC_Sortable_Model {
 			// sorting
 			if ( 'ASC' == $vars['order'] ) {
 				asort( $_users, $sort_flag );
-			}
-			else {
+			} else {
 				arsort( $_users, $sort_flag );
 			}
 
@@ -255,7 +269,5 @@ class CAC_Sortable_Model_User extends CAC_Sortable_Model {
 		}
 
 		$user_query->query_vars = array_merge( $user_query->query_vars, $vars );
-
-		return $user_query;
 	}
 }

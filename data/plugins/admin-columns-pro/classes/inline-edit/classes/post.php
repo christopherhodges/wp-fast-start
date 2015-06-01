@@ -18,13 +18,16 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 		switch ( $column->properties->type ) {
 			// Default columns
 			case 'author':
+			case 'date':
 			case 'categories':
 			case 'tags':
 			case 'title':
 
 			// Custom columns
 			case 'column-author_name':
+			case 'column-attachment':
 			case 'column-comment_status':
+			case 'column-content':
 			case 'column-excerpt':
 			case 'column-featured_image':
 			case 'column-order':
@@ -50,9 +53,12 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 			case 'column-wc-backorders_allowed':
 			case 'column-wc-crosssells':
 			case 'column-wc-dimensions':
+			case 'column-wc-featured':
 			case 'column-wc-reviews_enabled':
+			case 'column-wc-shipping_class':
 			case 'column-wc-stock-status':
 			case 'column-wc-upsells':
+			case 'column-wc-visibility':
 			case 'column-wc-weight':
 
 			// Order
@@ -116,6 +122,7 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 				break;
 			case 'column-status':
 				$options = get_post_statuses();
+				$options['trash'] = __( 'Trash' );
 				break;
 			case 'column-taxonomy':
 				$options = $this->get_term_options( $column['taxonomy'] );
@@ -130,6 +137,14 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 				break;
 			case 'order_status':
 				$options = $this->get_wc_order_status_options();
+				break;
+			case 'column-wc-visibility':
+				if ( $_column_object = $this->storage_model->get_column_by_name( $column['column-name'] ) ) {
+					$options = $_column_object->get_visibility_options();
+				}
+				break;
+			case 'column-wc-shipping_class':
+				$options = $this->get_term_options( 'product_shipping_class', __( 'No shipping class', 'cpac' ) );
 				break;
 		}
 
@@ -222,7 +237,7 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 				'type' 		=> 'select2_tags'
 			),
 			'date' => array(
-				'type' 		=> 'combodate',
+				'type' 		=> 'date',
 				'property' 	=> 'post_date'
 			),
 			'tags' => array(
@@ -245,6 +260,13 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 				'type' 		=> 'select2_dropdown',
 				'property' 	=> 'post_author',
 				'ajax_populate' => true
+			),
+			'column-attachment' => array(
+				'type' => 'media',
+				'attachment' => array(
+					'disable_select_current' => true,
+				),
+				'multiple' => true
 			),
 			'column-comment_status' => array(
 				'type' 		=> 'togglable',
@@ -281,6 +303,10 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 				'type' 		=> 'togglable',
 				'property' 	=> 'ping_status',
 				'options' 	=> array( 'closed', 'open' )
+			),
+			'column-content' => array(
+				'type' 		=> 'textarea',
+				'property' 	=> 'post_content',
 			),
 			'column-order' => array(
 				'type' 		=> 'text',
@@ -410,6 +436,9 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 					'advanced_dropdown'	=> true,
 					'multiple'			=> true
 				),
+				'column-wc-shipping_class' => array(
+					'type' => 'select'
+				),
 				'usage' => array(
 					'type' => 'wc_usage'
 				),
@@ -430,12 +459,22 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 						'yes' => __( 'Allow', 'woocommerce' )
 					)
 				),
+
+
+				// Products
 				'product_cat' => array(
 					'type' 		=> 'select2_tags'
 				),
 				'product_tag' => array(
 					'type' 		=> 'select2_tags'
 				),
+				'column-wc-featured' => array(
+					'type' => 'togglable',
+					'options' => array( 'no', 'yes' )
+				),
+				'column-wc-visibility' => array(
+					'type' => 'select',
+				)
 			);
 
 			$data = array_merge( $wc_data, $data );
@@ -501,6 +540,9 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 					switch ( $column_name ) {
 						case 'author':
 							$value = $post->post_author;
+							break;
+						case 'date':
+							$value = date( 'Ymd', strtotime( $post->post_date ) );
 							break;
 						case 'categories':
 							$term_ids = wp_get_post_terms( $post->ID, 'category', array( 'fields' => 'ids' ) );
@@ -781,10 +823,13 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 				$this->set_post_terms( $id, $value, 'category' );
 				break;
 			case 'date':
+				// preserve the original time
+				$time = strtotime("1970-01-01 " . date( 'H:i:s', strtotime( $post->post_date ) ) );
+
 				wp_update_post( array(
 					'ID' => $post->ID,
 					'edit_date' => 1, // needed for GMT date
-					'post_date' => $value
+					'post_date' => date( 'Y-m-d H:i:s', strtotime( $value ) + $time )
 				));
 				break;
 			case 'tags':
@@ -795,6 +840,20 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 			case 'column-acf_field':
 				if ( function_exists( 'update_field' ) ) {
 					update_field( $column->get_field_key(), $value, $post->ID );
+				}
+				break;
+			case 'column-attachment':
+				// detach
+				if ( $attachment_ids = get_posts( array( 'post_type' => 'attachment', 'post_parent' => $post->ID, 'posts_per_page' => -1, 'fields' => 'ids' ) ) ) {
+					foreach ( $attachment_ids as $attachment_id ) {
+						wp_update_post( array( 'ID' => $attachment_id, 'post_parent' => '' ) );
+					}
+				}
+				// attach
+				if ( ! empty( $value ) ) {
+					foreach ( $value as $attachment_id ) {
+						wp_update_post( array( 'ID' => $attachment_id, 'post_parent' => $post->ID ) );
+					}
 				}
 				break;
 			case 'column-featured_image':
@@ -923,6 +982,10 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 				update_post_meta( $id, 'free_shipping', ( $value == 'yes' ? 'yes' : 'no' ) );
 
 				break;
+			case 'column-wc-shipping_class':
+				$this->set_post_terms( $id, $value, 'product_shipping_class' );
+
+				break;
 			case 'column-wc-apply_before_tax':
 				update_post_meta( $id, 'apply_before_tax', ( $value == 'yes' ? 'yes' : 'no' ) );
 
@@ -1006,6 +1069,12 @@ class CACIE_Editable_Model_Post extends CACIE_Editable_Model {
 				break;
 			case 'product_tag':
 				$this->set_post_terms( $id, $value, 'product_tag' );
+				break;
+			case 'column-wc-featured':
+				update_post_meta( $id, '_featured', $value );
+				break;
+			case 'column-wc-visibility':
+				update_post_meta( $id, '_visibility', $value );
 				break;
 
 			// Save basic property such as title or description (data that is available in WP_Post)

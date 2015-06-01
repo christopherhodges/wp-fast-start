@@ -13,6 +13,11 @@ abstract class CPAC_Storage_Model {
 	public $label;
 
 	/**
+	 * @since 2.3.5
+	 */
+	public $singular_label;
+
+	/**
 	 * Identifier for Storage Model; Posttype etc.
 	 *
 	 * @since 2.0
@@ -106,6 +111,16 @@ abstract class CPAC_Storage_Model {
 
 		// Populate columns for this screen.
 		add_action( 'admin_init', array( $this, 'set_columns_on_current_screen' ) );
+	}
+
+	/**
+	 * Set menutype
+	 *
+	 * @since 2.4.1
+	 */
+	public function set_menu_type( $menu_type ) {
+		$this->menu_type = $menu_type;
+		return $this;
 	}
 
 	/**
@@ -255,12 +270,12 @@ abstract class CPAC_Storage_Model {
 		$result_default = update_option( "cpac_options_{$this->key}_default", array_keys( $this->get_default_columns() ) );
 
 		// error
-		if( ! $result && ! $result_default ) {
+		if ( ! $result && ! $result_default ) {
 			cpac_admin_message( sprintf( __( 'You are trying to store the same settings for %s.', 'cpac' ), "<strong>{$this->label}</strong>" ), 'error' );
 			return false;
 		}
 
-		cpac_admin_message( sprintf( __( 'Settings for %s updated succesfully.',  'cpac' ), "<strong>{$this->label}</strong>" ), 'updated' );
+		cpac_admin_message( sprintf( __( 'Settings for %s updated successfully.',  'cpac' ), "<strong>{$this->label}</strong>" ), 'updated' );
 
 		// refresh columns otherwise the newly added columns will not be displayed
 		$this->set_columns_on_current_screen();
@@ -887,6 +902,13 @@ abstract class CPAC_Storage_Model {
 
     	return $options[ $option ];
     }
+
+    /**
+	 * @since 2.4.2
+	 */
+	public function is_cache_enabled() {
+		return apply_filters( 'cac/is_cache_enabled', true );
+	}
 
 	/**
 	 * @since 3.1.2

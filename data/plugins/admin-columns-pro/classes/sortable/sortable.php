@@ -144,9 +144,7 @@ class CAC_Addon_Sortable {
 		}
 
 		?>
-		<span title="<?php echo esc_attr( __( 'sort', 'cpac' ) ); ?>" class="sorting <?php echo $column->options->sort; ?>" data-indicator-id="<?php $column->attr_id( 'sort' ); ?>">
-			<?php //_e( 'sort', 'cpac' ); ?>
-		</span>
+		<span title="<?php echo esc_attr( __( 'sort', 'cpac' ) ); ?>" class="sorting <?php echo $column->options->sort; ?>" data-indicator-id="<?php $column->attr_id( 'sort' ); ?>"></span>
 		<?php
 	}
 

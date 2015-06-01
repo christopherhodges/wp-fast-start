@@ -1,30 +1,33 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Admin Columns - Pro Addon\n"
+"Project-Id-Version: Admin Columns Pro\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-02-23 10:18+0100\n"
-"PO-Revision-Date: 2015-02-23 10:18+0100\n"
+"POT-Creation-Date: 2015-05-04 12:08+0100\n"
+"PO-Revision-Date: 2015-05-04 12:09+0100\n"
 "Last-Translator: Codepress <info@codepress.nl>\n"
-"Language-Team: Codepress <info@codepress.nl>\n"
+"Language-Team: Admin Columns <info@admincolumns.com>\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-KeywordsList: __;_e\n"
+"X-Poedit-KeywordsList: __;_e;_x:1,2c;_ex:1,2c;_n:1,2;_nx:1,2,4c;_n_noop:1,2;"
+"_nx_noop:1,2,3c;esc_attr__;esc_html__;esc_attr_e;esc_html_e;esc_attr_x:1,2c;"
+"esc_html_x:1,2c\n"
 "X-Poedit-Basepath: .\n"
 "X-Poedit-SourceCharset: UTF-8\n"
-"X-Generator: Poedit 1.7.4\n"
+"X-Generator: Poedit 1.7.6\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SearchPath-0: ..\n"
 "X-Poedit-SearchPath-1: .\n"
 "X-Poedit-SearchPathExcluded-0: ../codepress-admin-columns\n"
+"X-Poedit-SearchPathExcluded-1: ../classes/inline-edit/library\n"
 
-#: ../admin-columns-pro.php:95 ../cac-addon-pro.php:151
-#: ../classes/licence-manager-settings.php:334
+#: ../admin-columns-pro.php:98 ../cac-addon-pro.php:168
+#: ../classes/licence-manager-settings.php:516
 msgid "Settings"
 msgstr ""
 
-#: ../classes/api.php:239
+#: ../classes/api.php:255
 msgid "Empty response from API."
 msgstr ""
 
@@ -66,7 +69,7 @@ msgstr ""
 #: ../classes/export-import/classes/export_import.php:170
 msgid ""
 "Your columns settings are now loaded from your PHP code instead of from your "
-"column settings!"
+"stored settings!"
 msgstr ""
 
 #: ../classes/export-import/classes/export_import.php:108
@@ -200,55 +203,91 @@ msgstr ""
 msgid "Screen %s does not exist."
 msgstr ""
 
-#: ../classes/filtering/classes/model.php:121
-#, php-format
-msgid "All %s"
-msgstr ""
-
-#: ../classes/filtering/classes/model.php:143
-msgid "Empty"
-msgstr ""
-
-#: ../classes/filtering/classes/model.php:144
-msgid "Not empty"
-msgstr ""
-
-#: ../classes/filtering/classes/posts.php:435
-msgid "Not sticky"
-msgstr ""
-
-#: ../classes/filtering/classes/posts.php:436
-msgid "Sticky"
-msgstr ""
-
-#: ../classes/filtering/classes/posts.php:612
-msgid "False"
-msgstr ""
-
-#: ../classes/filtering/classes/posts.php:613
-msgid "True"
-msgstr ""
-
-#: ../classes/filtering/classes/posts.php:641
-#: ../classes/filtering/filtering.php:101
-#: ../classes/inline-edit/cac-addon-inline-edit.php:328
+#: ../classes/filtering/classes/comment.php:338
+#: ../classes/filtering/classes/post.php:517
+#: ../classes/filtering/classes/post.php:528
+#: ../classes/filtering/classes/user.php:328
+#: ../classes/filtering/filtering.php:106
+#: ../classes/inline-edit/cac-addon-inline-edit.php:330
 #: ../classes/sortable/sortable.php:127
 msgid "No"
 msgstr ""
 
-#: ../classes/filtering/classes/posts.php:642
-#: ../classes/filtering/filtering.php:97
-#: ../classes/inline-edit/cac-addon-inline-edit.php:324
+#: ../classes/filtering/classes/comment.php:339
+#: ../classes/filtering/classes/post.php:518
+#: ../classes/filtering/classes/post.php:529
+#: ../classes/filtering/classes/user.php:329
+#: ../classes/filtering/filtering.php:102
+#: ../classes/inline-edit/cac-addon-inline-edit.php:326
 #: ../classes/sortable/sortable.php:123
 msgid "Yes"
 msgstr ""
 
-#: ../classes/filtering/filtering.php:93
+#: ../classes/filtering/classes/media.php:217
+msgid "All comments"
+msgstr ""
+
+#: ../classes/filtering/classes/media.php:219
+msgid "No comments"
+msgstr ""
+
+#: ../classes/filtering/classes/media.php:220
+msgid "Has comments"
+msgstr ""
+
+#: ../classes/filtering/classes/model.php:254
+msgid "False"
+msgstr ""
+
+#: ../classes/filtering/classes/model.php:255
+msgid "True"
+msgstr ""
+
+#: ../classes/filtering/classes/model.php:431
+#, php-format
+msgid "All %s"
+msgstr ""
+
+#: ../classes/filtering/classes/model.php:466
+#: ../classes/filtering/classes/post.php:424
+#: ../classes/filtering/classes/post.php:440
+msgid "Empty"
+msgstr ""
+
+#: ../classes/filtering/classes/model.php:467
+msgid "Not empty"
+msgstr ""
+
+#: ../classes/filtering/classes/post.php:386
+msgid "Not sticky"
+msgstr ""
+
+#: ../classes/filtering/classes/post.php:387
+msgid "Sticky"
+msgstr ""
+
+#: ../classes/filtering/classes/post.php:425
+msgid "Has excerpt"
+msgstr ""
+
+#: ../classes/filtering/classes/post.php:441
+msgid "Has more tag"
+msgstr ""
+
+#: ../classes/filtering/classes/user.php:405
+msgid "Filter"
+msgstr ""
+
+#: ../classes/filtering/filtering.php:98
 msgid "Enable filtering?"
 msgstr ""
 
-#: ../classes/filtering/filtering.php:93
+#: ../classes/filtering/filtering.php:98
 msgid "This will make the column support filtering."
+msgstr ""
+
+#: ../classes/filtering/filtering.php:119
+msgid "filter"
 msgstr ""
 
 #: ../classes/inline-edit/cac-addon-inline-edit.php:96
@@ -314,188 +353,213 @@ msgstr ""
 msgid "Inline Edit"
 msgstr ""
 
-#: ../classes/inline-edit/cac-addon-inline-edit.php:320
+#: ../classes/inline-edit/cac-addon-inline-edit.php:322
 msgid "Enable editing?"
 msgstr ""
 
-#: ../classes/inline-edit/cac-addon-inline-edit.php:320
+#: ../classes/inline-edit/cac-addon-inline-edit.php:322
 msgid "This will make the column support inline editing."
 msgstr ""
 
-#: ../classes/inline-edit/cac-addon-inline-edit.php:358
+#: ../classes/inline-edit/cac-addon-inline-edit.php:360
 msgid "Date save format"
 msgstr ""
 
-#: ../classes/inline-edit/cac-addon-inline-edit.php:359
+#: ../classes/inline-edit/cac-addon-inline-edit.php:361
 msgid ""
 "Fill in the date format as it is stored. This is used to accurately "
 "determine the date."
 msgstr ""
 
-#: ../classes/inline-edit/cac-addon-inline-edit.php:368
+#: ../classes/inline-edit/cac-addon-inline-edit.php:370
 msgid "Fill in a date save format"
 msgstr ""
 
-#: ../classes/inline-edit/cac-addon-inline-edit.php:370
+#: ../classes/inline-edit/cac-addon-inline-edit.php:372
 #, php-format
 msgid "Defaults to: %s."
 msgstr ""
 
-#: ../classes/inline-edit/cac-addon-inline-edit.php:371
+#: ../classes/inline-edit/cac-addon-inline-edit.php:373
 msgid "See all available formats"
 msgstr ""
 
-#: ../classes/inline-edit/cac-addon-inline-edit.php:404
+#: ../classes/inline-edit/cac-addon-inline-edit.php:406
 #, php-format
 msgid ""
 "The Inline Edit add-on is enabled but not effective. It requires %s in order "
 "to work."
 msgstr ""
 
-#: ../classes/inline-edit/classes/model.php:246
-msgid "Invalid request."
-msgstr ""
-
-#: ../classes/inline-edit/classes/model.php:252
-#: ../classes/inline-edit/classes/model.php:836
-msgid "Invalid column."
-msgstr ""
-
-#: ../classes/inline-edit/classes/model.php:623
-msgid "None"
-msgstr ""
-
-#: ../classes/inline-edit/classes/model.php:628
-msgid "- Select -"
-msgstr ""
-
-#: ../classes/inline-edit/classes/model.php:824
-msgid "Required fields missing."
-msgstr ""
-
-#: ../classes/inline-edit/classes/model.php:829
-msgid "Invalid item ID."
-msgstr ""
-
-#: ../classes/inline-edit/classes/post.php:153
-msgid "Default Template"
-msgstr ""
-
-#: ../classes/inline-edit/classes/post.php:256
-msgid "Excerpt automatically generated from content."
-msgstr ""
-
-#: ../classes/inline-edit/classes/post.php:417
-msgid "Do not allow"
-msgstr ""
-
-#: ../classes/inline-edit/classes/post.php:418
-msgid "Allow, but notify customer"
-msgstr ""
-
-#: ../classes/inline-edit/classes/post.php:419
-msgid "Allow"
-msgstr ""
-
-#: ../classes/inline-edit/classes/post.php:626
-msgid ", "
-msgstr ""
-
-#: ../classes/inline-edit/classes/post.php:672
+#: ../classes/inline-edit/classes/media.php:274
+#: ../classes/inline-edit/classes/post.php:731
 msgid "Unpublished"
 msgstr ""
 
-#: ../classes/inline-edit/classes/post.php:675
-msgid "Y/m/d g:i:s A"
+#: ../classes/inline-edit/classes/media.php:280
+#, php-format
+msgid "%s from now"
 msgstr ""
 
-#: ../classes/inline-edit/classes/post.php:682
+#: ../classes/inline-edit/classes/media.php:282
+#: ../classes/inline-edit/classes/post.php:741
 #, php-format
 msgid "%s ago"
 msgstr ""
 
-#: ../classes/inline-edit/classes/post.php:684
+#: ../classes/inline-edit/classes/media.php:284
+#: ../classes/inline-edit/classes/post.php:743
 msgid "Y/m/d"
 msgstr ""
 
-#: ../classes/inline-edit/classes/post.php:694
+#: ../classes/inline-edit/classes/model.php:255
+msgid "Invalid request."
+msgstr ""
+
+#: ../classes/inline-edit/classes/model.php:261
+#: ../classes/inline-edit/classes/model.php:859
+msgid "Invalid column."
+msgstr ""
+
+#: ../classes/inline-edit/classes/model.php:633
+msgid "None"
+msgstr ""
+
+#: ../classes/inline-edit/classes/model.php:638
+msgid "- Select -"
+msgstr ""
+
+#: ../classes/inline-edit/classes/model.php:847
+msgid "Required fields missing."
+msgstr ""
+
+#: ../classes/inline-edit/classes/model.php:852
+msgid "Invalid item ID."
+msgstr ""
+
+#: ../classes/inline-edit/classes/post.php:125
+msgid "Trash"
+msgstr ""
+
+#: ../classes/inline-edit/classes/post.php:147
+msgid "No shipping class"
+msgstr ""
+
+#: ../classes/inline-edit/classes/post.php:163
+msgid "Default Template"
+msgstr ""
+
+#: ../classes/inline-edit/classes/post.php:279
+msgid "Excerpt automatically generated from content."
+msgstr ""
+
+#: ../classes/inline-edit/classes/post.php:457
+msgid "Do not allow"
+msgstr ""
+
+#: ../classes/inline-edit/classes/post.php:458
+msgid "Allow, but notify customer"
+msgstr ""
+
+#: ../classes/inline-edit/classes/post.php:459
+msgid "Allow"
+msgstr ""
+
+#: ../classes/inline-edit/classes/post.php:685
+msgid ", "
+msgstr ""
+
+#: ../classes/inline-edit/classes/post.php:734
+msgid "Y/m/d g:i:s A"
+msgstr ""
+
+#: ../classes/inline-edit/classes/post.php:753
 msgid "Published"
 msgstr ""
 
-#: ../classes/inline-edit/classes/post.php:697
+#: ../classes/inline-edit/classes/post.php:756
 msgid "Missed schedule"
 msgstr ""
 
-#: ../classes/inline-edit/classes/post.php:699
+#: ../classes/inline-edit/classes/post.php:758
 msgid "Scheduled"
 msgstr ""
 
-#: ../classes/inline-edit/classes/post.php:701
+#: ../classes/inline-edit/classes/post.php:760
 msgid "Last Modified"
 msgstr ""
 
-#: ../classes/inline-edit/classes/post.php:874
+#: ../classes/inline-edit/classes/post.php:948
 msgid "The SKU must be unique."
 msgstr ""
 
-#: ../classes/inline-edit/classes/user.php:295
+#: ../classes/inline-edit/classes/user.php:293
 #, php-format
 msgid "E-mail: %s"
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:85
+#: ../classes/licence-manager-settings.php:120
 #, php-format
 msgid ""
 "Licence not active. Enter your licence key under the <a href='%s'>Settings "
 "tab</a>."
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:169
+#: ../classes/licence-manager-settings.php:204
 msgid "Empty licence."
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:176
-#: ../classes/licence-manager-settings.php:182
-#: ../classes/licence-manager-settings.php:192
-#: ../classes/licence-manager-settings.php:198
+#: ../classes/licence-manager-settings.php:211
+#: ../classes/licence-manager-settings.php:217
+#: ../classes/licence-manager-settings.php:227
+#: ../classes/licence-manager-settings.php:233
 msgid "Wrong response from API."
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:230
+#: ../classes/licence-manager-settings.php:265
 msgid "Updates"
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:231
-#: ../classes/licence-manager-settings.php:282
+#: ../classes/licence-manager-settings.php:266
+#: ../classes/licence-manager-settings.php:329
 msgid "Enter your licence code to receive automatic updates."
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:271
+#: ../classes/licence-manager-settings.php:285
+msgid "This plugin has been network activated."
+msgstr ""
+
+#: ../classes/licence-manager-settings.php:287
+#, php-format
+msgid "Go to <a href=\"%s\">network settings</a>."
+msgstr ""
+
+#: ../classes/licence-manager-settings.php:318
 msgid "Automatic updates are enabled."
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:272
+#: ../classes/licence-manager-settings.php:319
 msgid "Deactivate licence"
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:279
+#: ../classes/licence-manager-settings.php:326
 msgid "Enter your licence code"
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:280
+#: ../classes/licence-manager-settings.php:327
 msgid "Update licence"
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:283
+#: ../classes/licence-manager-settings.php:330
 #, php-format
 msgid "You can find your license key on your %s."
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:283
+#: ../classes/licence-manager-settings.php:330
 msgid "account page"
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:294
+#: ../classes/licence-manager-settings.php:341
 msgid ""
 "Could not connect to admincolumns.com — You will not receive update "
 "notifications or be able to activate your license until this is fixed. This "
@@ -504,35 +568,79 @@ msgid ""
 "quick fix you can:"
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:299
+#: ../classes/licence-manager-settings.php:346
 msgid "Disable SSL"
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:302
+#: ../classes/licence-manager-settings.php:349
 msgid "Enable SSL"
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:322
+#: ../classes/licence-manager-settings.php:372
+#, php-format
+msgid "1 day"
+msgid_plural "%s days"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ../classes/licence-manager-settings.php:375
+#, php-format
+msgid ""
+"Your Admin Columns Pro license will expire in %s. %s now and get a %d%% "
+"discount!"
+msgstr ""
+
+#: ../classes/licence-manager-settings.php:377
+#: ../classes/licence-manager-settings.php:386
+msgid "Renew your license"
+msgstr ""
+
+#: ../classes/licence-manager-settings.php:384
+#, php-format
+msgid ""
+"Your Admin Columns Pro license will expire in %s. %s now and get a discount!"
+msgstr ""
+
+#: ../classes/licence-manager-settings.php:393
+#, php-format
+msgid ""
+"Your Admin Columns Pro license has expired on %s! Renew your license now by "
+"going to your %s."
+msgstr ""
+
+#: ../classes/licence-manager-settings.php:395
+msgid "My Account page"
+msgstr ""
+
+#: ../classes/licence-manager-settings.php:410
+msgid "Your license was successfully renewed!"
+msgstr ""
+
+#: ../classes/licence-manager-settings.php:411
+msgid "Your license has not been renewed yet."
+msgstr ""
+
+#: ../classes/licence-manager-settings.php:413
+msgid "Check my license"
+msgstr ""
+
+#: ../classes/licence-manager-settings.php:512
 msgid "To finish activating Admin Columns Pro, please "
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:324
+#: ../classes/licence-manager-settings.php:514
+#, fuzzy
 msgid "To update, "
-msgstr ""
+msgstr "Add-ons"
 
-#: ../classes/licence-manager-settings.php:329
-#: ../classes/licence-manager-settings.php:334
+#: ../classes/licence-manager-settings.php:516
 #, php-format
 msgid ""
 "go to %s and enter your licence key. If you don't have a licence key, you "
 "may <a href=\"%s\" target=\"_blank\">purchase one</a>."
 msgstr ""
 
-#: ../classes/licence-manager-settings.php:329
-msgid "each subsite"
-msgstr ""
-
-#: ../classes/licence-manager-settings.php:369
+#: ../classes/licence-manager-settings.php:739
 #, php-format
 msgid ""
 "To enable updates for this product, please <a href='%s'>activate your "
@@ -565,8 +673,9 @@ msgid "Show all results when sorting. Default is <code>off</code>."
 msgstr ""
 
 #: ../classes/sortable/sortable.php:68
+#, fuzzy
 msgid "Sortable add-on"
-msgstr ""
+msgstr "Get Admin Columns Pro"
 
 #: ../classes/sortable/sortable.php:119
 msgid "Enable sorting?"
@@ -588,14 +697,10 @@ msgstr ""
 msgid "Excerpt"
 msgstr ""
 
-#: ../classes/inline-edit/library/moment/moment.min.2.4.0.js:6
-msgid "Weeks"
+#: ../classes/third-party/wordpress-seo.php:17
+msgid "Enter your SEO Title"
 msgstr ""
 
-#, fuzzy
-#~ msgid "Pro add-on"
-#~ msgstr "Get Admin Columns Pro"
-
-#, fuzzy
-#~ msgid "Add-ons updates"
-#~ msgstr "Add-ons"
+#: ../classes/third-party/wordpress-seo.php:21
+msgid "Enter your SEO Meta Description"
+msgstr ""

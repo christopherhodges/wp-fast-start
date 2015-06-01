@@ -78,13 +78,20 @@ class CAC_Sortable_Model_Post extends CAC_Sortable_Model {
 
 			// WooCommerce columns
 
+			// Default WC
+			'product_cat',
+			'product_tag',
+
 			// Product
 			'price',
 			'sku',
 			'column-wc-dimensions',
 			'column-wc-backorders_allowed',
+			'column-wc-featured',
 			'column-wc-reviews_enabled',
+			'column-wc-shipping_class',
 			'column-wc-stock-status',
+			'column-wc-visibility',
 			'column-wc-weight',
 
 			// Order
@@ -135,7 +142,7 @@ class CAC_Sortable_Model_Post extends CAC_Sortable_Model {
 		$post_type = $vars['post_type'];
 
 		// apply sorting preference
-		$this->apply_sorting_preference( $vars );
+		$vars = $this->apply_sorting_preference( $vars );
 
 		// no sorting
 		if ( empty( $vars['orderby'] ) ) {
@@ -344,6 +351,8 @@ class CAC_Sortable_Model_Post extends CAC_Sortable_Model {
 				}
 				break;
 
+
+			// Custom Field
 			case 'column-meta' :
 
 				// Post Title
@@ -356,33 +365,37 @@ class CAC_Sortable_Model_Post extends CAC_Sortable_Model {
 						$title_ids 	= $column->get_ids_from_meta( $meta );
 						$title 		= isset( $title_ids[0] ) ? get_post_field( 'post_title', $title_ids[0] ) : '';
 
-						$posts[ $id ] = $title;
+						if ( $title || $this->show_all_results ) {
+							$posts[ $id ] = $title;
+						}
 					}
 				}
-
-				// Counter
 				elseif ( 'count' == $column->options->field_type ) {
 					$sort_flag = SORT_NUMERIC;
 					foreach ( $this->get_posts() as $id ) {
 						$count = $column->get_raw_value( $id, false );
-						$posts[ $id ] = count( $count );
+						if ( $count || $this->show_all_results ) {
+							$posts[ $id ] = count( $count );
+						}
 					}
 				}
-
-				// Date
 				elseif ( 'date' == $column->options->field_type ) {
 					$sort_flag = SORT_NUMERIC;
 					foreach ( $this->get_posts() as $id ) {
 						$raw = $column->get_raw_value( $id );
-						$posts[ $id ] = $column->get_timestamp( $raw );
+						$timestamp = $column->get_timestamp( $raw );
+						if ( $timestamp || $this->show_all_results ) {
+							$posts[ $id ] = $timestamp;
+						}
 					}
-				}
-
-				// Term ID
+ 				}
 				elseif ( 'term_by_id' == $column->options->field_type ) {
 					$sort_flag = SORT_REGULAR;
 					foreach ( $this->get_posts() as $id ) {
-						$posts[ $id ] = $column->get_terms_by_id( $column->get_raw_value( $id ) );
+						$terms = $column->get_terms_by_id( $column->get_raw_value( $id ) );
+						if ( $terms || $this->show_all_results ) {
+							$posts[ $id ] = $terms;
+						}
 					}
 				}
 
@@ -395,7 +408,10 @@ class CAC_Sortable_Model_Post extends CAC_Sortable_Model {
 					if ( $this->show_all_results ) {
 						$sort_flag = $is_type_numeric ? SORT_NUMERIC : SORT_REGULAR;
 						foreach ( $this->get_posts() as $id ) {
-							$posts[ $id ] = $column->get_raw_value( $id );
+							$value = $column->get_raw_value( $id );
+							if ( $value || $this->show_all_results ) {
+								$posts[ $id ] = $value;
+							}
 						}
 					}
 
@@ -410,16 +426,13 @@ class CAC_Sortable_Model_Post extends CAC_Sortable_Model {
 
 				break;
 
+			// ACF
 			case 'column-acf_field' :
 
 				// make sure acf has not been deactivated in the meanwhile...
 				if ( method_exists( $column, 'get_field' ) ) {
-
 					$field = $column->get_field();
-
-					// numeric sorting
 					$sort_flag = in_array( $field['type'], array( 'date_picker', 'number' ) ) ? SORT_NUMERIC : SORT_REGULAR;
-
 					foreach ( $this->get_posts() as $id ) {
 						$value = $column->get_sorting_value( $id );
 						if ( $value || $this->show_all_results ) {
@@ -431,6 +444,16 @@ class CAC_Sortable_Model_Post extends CAC_Sortable_Model {
 				break;
 
 			// WooCommerce
+			case 'product_cat' :
+				$sort_flag = SORT_NUMERIC;
+				$posts = $this->get_posts_sorted_by_taxonomy( 'product_cat' );
+				break;
+
+			case 'product_tag' :
+				$sort_flag = SORT_NUMERIC;
+				$posts = $this->get_posts_sorted_by_taxonomy( 'product_tag' );
+				break;
+
 			case 'column-wc-price' :
 				$sort_flag = SORT_NUMERIC;
 				foreach ( $this->get_posts() as $id ) {
@@ -463,10 +486,22 @@ class CAC_Sortable_Model_Post extends CAC_Sortable_Model {
 
 			case 'usage':
 				$sort_flag = SORT_NUMERIC;
-
 				foreach ( $this->get_posts() as $id ) {
 					$raw_value = $column->get_raw_value( $id );
-					$posts[ $id ] = $raw_value['usage_limit'];
+					$usage = isset( $raw_value['usage_limit'] ) ? $raw_value['usage_limit'] : false;
+					if ( $usage || $this->show_all_results ) {
+						$posts[ $id ] = $usage;
+					}
+				}
+				break;
+
+			case 'column-wc-visibility':
+				$sort_flag = SORT_REGULAR;
+				foreach ( $this->get_posts() as $id ) {
+					$value = $column->get_raw_value( $id );
+					if ( $value || $this->show_all_results ) {
+						$posts[ $id ] = $value;
+					}
 				}
 				break;
 
@@ -479,7 +514,11 @@ class CAC_Sortable_Model_Post extends CAC_Sortable_Model {
 
 					$sort_flag = SORT_REGULAR;
 					foreach ( $this->get_posts() as $id ) {
-						$posts[ $id ] = $column->get_raw_value( $id );
+						$value = $column->get_raw_value( $id );
+
+						if ( $value || $this->show_all_results ) {
+							$posts[ $id ] = $value;
+						}
 					}
 				}
 
@@ -488,7 +527,6 @@ class CAC_Sortable_Model_Post extends CAC_Sortable_Model {
 		// we will add the sorted post ids to vars['post__in'] and remove unused vars
 		if ( isset( $sort_flag ) ) {
 
-			// orderby column value
 			if ( ! $posts ) {
 				foreach ( $this->get_posts() as $id ) {
 					$posts[ $id ] = $this->prepare_sort_string_value( $column->get_value( $id ) );

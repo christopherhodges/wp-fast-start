@@ -152,7 +152,7 @@ class CACIE_Editable_Model_User extends CACIE_Editable_Model {
 		 * @param CACIE_Editable_Model $model Editability storage model
 		 */
 		$data = apply_filters( 'cac/editable/editables_data', $data, $this );
-		$data = apply_filters( 'cac/editable/editables_data/type=' . $this->storage_model->get_type(), $data, $this );
+        $data = apply_filters( 'cac/editable/editables_data/type=' . $this->storage_model->get_type(), $data, $this );
 
 		return $data;
 	}
@@ -171,18 +171,23 @@ class CACIE_Editable_Model_User extends CACIE_Editable_Model {
 			return;
 		}
 
-		// run query
-		$user_query->query();
-
-		// do not allow to run this query more then once
-		if ( isset( $user_query->query_vars['_cpac_is_subquery'] ) ) {
+		// Check whether this is the users overview page
+		if ( ! empty( $_REQUEST['action'] )  && $_REQUEST['action'] == 'delete' ) {
 			return;
 		}
+
+		// run query
+		$user_query->query();
 
 		$items = array();
 
 		if ( $users = $user_query->results ) {
 			foreach ( $users as $user ) {
+
+				if ( ! is_a( $user, 'WP_User' ) ) {
+					continue;
+				}
+
 				if ( ! current_user_can( 'edit_user', $user->ID ) ) {
 					continue;
 				}

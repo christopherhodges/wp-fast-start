@@ -101,6 +101,13 @@ abstract class CACIE_Editable_Model {
 	}
 
 	/**
+	 * @since 3.5
+	 */
+	protected function get_list_selector() {
+		return '#the-list';
+	}
+
+	/**
 	 * Admin scripts
 	 *
 	 * @since 1.0
@@ -112,6 +119,7 @@ abstract class CACIE_Editable_Model {
 		}
 
 		// Allow JS to access the column and item data for this storage model on the edit page
+		wp_localize_script( 'cacie-admin-edit', 'CACIE_List_Selector', $this->get_list_selector() );
 		wp_localize_script( 'cacie-admin-edit', 'CACIE_Storage_Model', $this->storage_model->key );
 		wp_localize_script( 'cacie-admin-edit', 'CACIE_Columns', $this->get_columns() );
 		wp_localize_script( 'cacie-admin-edit', 'CACIE_Items', $this->get_items() );
@@ -359,7 +367,11 @@ abstract class CACIE_Editable_Model {
 		}
 
 		// Author
-		else if ( $column->properties->type == 'author' || $column->properties->type == 'column-author_name' ) {
+		else if ( in_array( $column->properties->type, array(
+			'author',
+			'column-author_name',
+			'column-user' // comment column
+			) ) ) {
 			$options = $this->get_users_options( array(
 				'search' => '*' . $search . '*'
 			) );
@@ -558,6 +570,7 @@ abstract class CACIE_Editable_Model {
 						break;
 					case 'number':
 						$editable['type'] = 'number';
+						$editable['range_step'] = 'any';
 						break;
 					case 'taxonomy':
 						$editable['type'] = 'select';
@@ -626,6 +639,10 @@ abstract class CACIE_Editable_Model {
 								);
 							}
 
+							if ( ! is_array( $editable['options'] ) ) {
+								$editable['options'] = array();
+							}
+
 							$editable['options'] = $option_null + $editable['options'];
 						}
 					}
@@ -674,7 +691,7 @@ abstract class CACIE_Editable_Model {
 		}
 
 		// Meta field
-		if ( 'column-meta' == $column['type'] ) {
+		else if ( 'column-meta' == $column['type'] ) {
 			switch( $column['field_type'] ) {
 				case 'excerpt' :
 					$editable['type'] = 'textarea';
@@ -1035,13 +1052,7 @@ abstract class CACIE_Editable_Model {
 	 */
 	protected function update_meta( $id, $meta_key, $value ) {
 
-		$meta_type = $this->storage_model->meta_type;
-
-		// @todo check if stored values are of the same type
-		// $current_value 	= get_metadata( $meta_type, $id, $meta_key, true );
-		// if ( $current_value && ( gettype( $current_value ) !== gettype( $value ) ) ) {}
-
-		update_metadata( $meta_type, $id, $meta_key, $value );
+		update_metadata( $this->storage_model->meta_type, $id, $meta_key, $value );
 	}
 
 	/**
@@ -1152,10 +1163,15 @@ abstract class CACIE_Editable_Model {
 	 * @since 1.0
 	 *
 	 * @param string $taxonomy Taxonomy name
+	 * @param string $default Default option ( key is always zero )
 	 * @return List of term options (term_id => name)
 	 */
-	public function get_term_options( $taxonomy ) {
+	public function get_term_options( $taxonomy, $default = '' ) {
 		$options = array();
+
+		if ( $default ) {
+			$options[0] = $default;
+		}
 
 		$terms = get_terms( $taxonomy, array(
 		 	'hide_empty' => 0,

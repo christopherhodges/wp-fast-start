@@ -22,6 +22,7 @@ class CAC_Addon_Filtering {
 
 		// styling & scripts
 		add_action( "admin_print_styles-settings_page_codepress-admin-columns", array( $this, 'scripts' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'scripts_listings' ) );
 
 		// Add column properties
 		add_filter( 'cac/column/properties', array( $this, 'set_column_default_properties' ) );
@@ -34,9 +35,6 @@ class CAC_Addon_Filtering {
 
 		// add setting filtering indicator
 		add_action( 'cac/column/settings_meta', array( $this, 'add_label_filter_indicator' ), 9 );
-
-		// add filtering support for ACF fields
-		add_action( 'cac/columns', array( $this, 'add_support_acf_addon' ) );
 
 		// clears all column cache for filtering when updating posts, terms or profile.
 		add_action( 'cac/inline-edit/after_ajax_column_save', array( $this, 'clear_cache_by_column' ) );
@@ -57,12 +55,20 @@ class CAC_Addon_Filtering {
 	}
 
 	/**
+	 * @since 3.4.4
+	 */
+	public function scripts_listings() {
+		if ( $this->cpac->is_columns_screen() ) {
+			wp_enqueue_style( 'cac-addon-filtering-listings-css', CAC_FC_URL . '/assets/css/listings_screen.css', array(), CAC_PRO_VERSION, 'all' );
+		}
+	}
+
+	/**
 	 * @since 1.0
 	 */
 	public function set_column_default_properties( $properties ) {
 
 		$properties['is_filterable'] = false;
-
 		return $properties;
 	}
 
@@ -72,7 +78,6 @@ class CAC_Addon_Filtering {
 	public function set_column_default_options( $options ) {
 
 		$options['filter'] = 'off';
-
 		return $options;
 	}
 
@@ -129,24 +134,31 @@ class CAC_Addon_Filtering {
 		include_once 'classes/model.php';
 
 		// Childs
-		include_once 'classes/posts.php';
-		//include_once 'classes/user.php';
+		include_once 'classes/media.php';
+		include_once 'classes/post.php';
+		include_once 'classes/user.php';
+		include_once 'classes/comment.php';
 
 		// Posts
 		foreach ( $cpac->get_post_types() as $post_type ) {
 			if ( $storage_model = $cpac->get_storage_model( $post_type ) ) {
-				new CAC_Filtering_Model_Posts( $storage_model );
+				new CAC_Filtering_Model_Post( $storage_model );
 			}
 		}
 
 		// User
-		/*if ( $storage_model = $cpac->get_storage_model( 'wp-users' ) ) {
+		if ( $storage_model = $cpac->get_storage_model( 'wp-users' ) ) {
 			new CAC_Filtering_Model_User( $storage_model );
-		}*/
+		}
 
 		// Media
 		if ( $storage_model = $cpac->get_storage_model( 'wp-media' ) ) {
-			new CAC_Filtering_Model_Posts( $storage_model );
+			new CAC_Filtering_Model_Media( $storage_model );
+		}
+
+		// Comment
+		if ( $storage_model = $cpac->get_storage_model( 'wp-comments' ) ) {
+			new CAC_Filtering_Model_Comment( $storage_model );
 		}
 	}
 
@@ -189,73 +201,6 @@ class CAC_Addon_Filtering {
 						$storage_model->delete_cache( 'filtering', $column['column-name'] );
 					}
 				}
-			}
-		}
-	}
-
-	/**
-	 * Add filtering support
-	 *
-	 * @since 1.0.6
-	 */
-	public function add_support_acf_addon( $columns ) {
-
-		if ( ! class_exists( 'CPAC_Addon_ACF' ) ) {
-			return;
-		}
-
-		foreach ( $columns as $column ) {
-
-			if ( 'post' !== $column->storage_model->meta_type ) {
-				continue;
-			}
-
-			if ( 'column-acf_field' !== $column->properties->type ) {
-				continue;
-			}
-
-			if ( ! method_exists( $column, 'get_field' ) ) {
-				continue;
-			}
-
-			$field = $column->get_field();
-
-			switch ( $field['type'] ) {
-
-				case 'post_object' :
-				case 'select' :
-					// only allow single values
-					if ( 0 === $field['multiple'] ) {
-						$column->set_properties( 'is_filterable', true );
-					}
-				break;
-
-				case 'taxonomy' :
-					// only allow single values
-					if ( in_array( $field['field_type'], array( 'radio', 'select' ) ) ) {
-						$column->set_properties( 'is_filterable', true );
-					}
-				break;
-
-				case 'number' :
-				case 'email' :
-				case 'password' :
-				case 'text' :
-				case 'image' :
-				case 'file' :
-				case 'url' :
-				case 'radio' :
-				case 'true_false' :
-				case 'page_link' :
-				case 'user' :
-				case 'date_picker' :
-				case 'color_picker' :
-					$column->set_properties( 'is_filterable', true );
-				break;
-
-				// not supported
-				// these fields are stored serialised
-				// checkbox, textarea, wysiwyg, gallery, relationship, google_map
 			}
 		}
 	}

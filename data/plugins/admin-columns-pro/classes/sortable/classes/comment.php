@@ -34,7 +34,7 @@ class CAC_Sortable_Model_Comment extends CAC_Sortable_Model {
 	 * @see CAC_Sortable_Model::get_sortables()
 	 * @since 1.0
 	 */
-	function get_sortables() {
+	public function get_sortables() {
 
 		$column_names = array(
 
@@ -46,12 +46,15 @@ class CAC_Sortable_Model_Comment extends CAC_Sortable_Model {
 			'column-approved',
 			'column-author',
 			'column-author_ip',
+			'column-author_name',
 			'column-author_url',
 			'column-author_email',
 			'column-comment_id',
 			'column-date',
 			'column-date_gmt',
 			'column-excerpt',
+			'column-type',
+			'column-user',
 			'column-meta',
 			'column-reply_to',
 		);
@@ -73,22 +76,21 @@ class CAC_Sortable_Model_Comment extends CAC_Sortable_Model {
 		global $pagenow;
 
 		// fire only when we are in the admins edit-comments
-		if ( 'edit-comments.php' !== $pagenow )
+		if ( 'edit-comments.php' !== $pagenow ) {
 			return $pieces;
+		}
 
-		$vars = array (
-			'orderby' 	=> $ref_comment->query_vars['orderby'],
-			'order'		=> $pieces['order']
+		$vars = array(
+			'orderby' => $ref_comment->query_vars['orderby'],
+			'order'	=> isset( $_GET['order'] ) ? strtoupper( sanitize_key( $_GET['order'] ) ) : 'ASC'
 		);
 
-		// apply sorting preference
-		$this->apply_sorting_preference( $vars );
+		$vars = $this->apply_sorting_preference( $vars );
 
-		// Column
 		$column = $this->get_column_by_orderby( $vars['orderby'] );
-
-		if ( empty( $column ) )
+		if ( empty( $column ) ) {
 			return $pieces;
+		}
 
 		switch ( $column->properties->type ) :
 
@@ -108,6 +110,10 @@ class CAC_Sortable_Model_Comment extends CAC_Sortable_Model {
 
 			case 'column-author_ip' :
 				$pieces['orderby'] = 'comment_author_IP';
+				break;
+
+			case 'column-author_name' :
+				$pieces['orderby'] = 'comment_author';
 				break;
 
 			case 'column-author_url' :
@@ -138,21 +144,29 @@ class CAC_Sortable_Model_Comment extends CAC_Sortable_Model {
 				$pieces['orderby'] = 'comment_content';
 				break;
 
+			case 'column-type' :
+				$pieces['orderby'] = 'comment_type';
+				break;
+
+			case 'column-user' :
+				$pieces['orderby'] = 'user_id';
+				break;
+
 			case 'column-date_gmt' :
 				$pieces['orderby'] = 'comment_date_gmt'; // this the default for Comment Query
 				break;
 
 			case 'column-meta' :
 				global $wpdb;
-				$pieces['join'] 	= $pieces['join'] . " JOIN $wpdb->commentmeta cm ON $wpdb->comments.comment_ID = cm.comment_id";
-				$pieces['orderby'] 	= "cm.meta_value";
-				$pieces['where'] 	= $pieces['where']. $wpdb->prepare( " AND cm.meta_key=%s", $column->options->field );
+				$pieces['join'] = $pieces['join'] . " JOIN $wpdb->commentmeta cm ON $wpdb->comments.comment_ID = cm.comment_id";
+				$pieces['orderby'] = "cm.meta_value";
+				$pieces['where'] = $pieces['where']. $wpdb->prepare( " AND cm.meta_key=%s", $column->options->field );
 				break;
 
 		endswitch;
 
 		// set order
-		$pieces['order'] = $vars['order'];
+		$pieces['orderby'] .= ' ' . $vars['order'];
 
 		return $pieces;
 	}

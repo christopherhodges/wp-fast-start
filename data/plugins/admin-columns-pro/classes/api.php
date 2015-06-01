@@ -195,6 +195,23 @@ class ACP_API {
 	}
 
 	/**
+	 * Get license details
+	 *
+	 * @since 3.4.3
+	 * @param string $license_key
+	 * @return mixed API Response
+	 */
+	public function get_license_details( $license_key ) {
+
+		$response = $this->request( array(
+			'request'	    => 'licensedetails',
+			'license_key'	=> $license_key,
+		));
+
+		return $response;
+	}
+
+	/**
 	 * Test request
 	 *
 	 * @since 3.1.2
@@ -209,7 +226,6 @@ class ACP_API {
 
 	/**
 	 * API Request
-	 * Example Querystring: /?wc-api=software-licence-api&request=update&licence_key=<licence-key>&plugin_name=cac-addon-pro/cac-addon-pro.php&version=1.1.0
 	 *
 	 * @since 1.1
 	 *

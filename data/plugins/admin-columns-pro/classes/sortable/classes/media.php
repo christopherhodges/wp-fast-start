@@ -80,17 +80,13 @@ class CAC_Sortable_Model_Media extends CAC_Sortable_Model {
 			return $vars;
 		}
 
-		// apply sorting preference
-		$this->apply_sorting_preference( $vars );
+		$vars = $this->apply_sorting_preference( $vars );
 
-		// no sorting
 		if ( empty( $vars['orderby'] ) ) {
 			return $vars;
 		}
 
-		// Column
 		$column = $this->get_column_by_orderby( $vars['orderby'] );
-
 		if ( empty( $column ) ) {
 			return $vars;
 		}

@@ -18,6 +18,8 @@ class CACIE_Editable_Model_Media extends CACIE_Editable_Model {
 		switch ( $column->properties->type ) {
 
 			// Default columns
+			case 'author':
+			//case 'date': // @todo: datepicker conflict with ACF
 			case 'title':
 
 			// Custom columns
@@ -56,14 +58,11 @@ class CACIE_Editable_Model_Media extends CACIE_Editable_Model {
 		switch ( $column['type'] ) {
 
 			// WP Default
-			//case 'author':
-				//$options = array();
-				//break;
+
+			// Custom columns
 			case 'column-taxonomy':
 				$options = $this->get_term_options( $column['taxonomy'] );
 				break;
-
-			// Custom columns
 			case 'column-mime_type':
 				$mime_types = wp_get_mime_types();
 				$options = array_combine( $mime_types, $mime_types );
@@ -86,6 +85,15 @@ class CACIE_Editable_Model_Media extends CACIE_Editable_Model {
 			 * Default columns
 			 *
 			 */
+			'author' => array(
+				'type' 		=> 'select2_dropdown',
+				'property' 	=> 'post_author',
+				'ajax_populate' => true
+			),
+			'date' => array(
+				'type' 		=> 'date',
+				'property' 	=> 'post_date'
+			),
 			'title' => array(
 				'type' 		=> 'text',
 				'property' 	=> 'post_title',
@@ -177,6 +185,12 @@ class CACIE_Editable_Model_Media extends CACIE_Editable_Model {
 				if ( $column->properties->default ) {
 
 					switch ( $column_name ) {
+						case 'author':
+							$value = $post->post_author;
+							break;
+						case 'date':
+							$value = date( 'Ymd', strtotime( $post->post_date ) );
+							break;
 						case 'title':
 							$value = $post->post_title;
 							break;
@@ -248,12 +262,33 @@ class CACIE_Editable_Model_Media extends CACIE_Editable_Model {
 
 		switch ( $column->properties->type ) {
 
+			case 'author':
+				printf( '<a href="%s">%s</a>',
+					esc_url( add_query_arg( array( 'author' => get_the_author_meta('ID') ), 'upload.php' ) ),
+					get_the_author()
+				);
+				break;
+			case 'date':
+				// copied from class-wp-media-list-table.php
+				if ( '0000-00-00 00:00:00' == $post->post_date ) {
+					$h_time = __( 'Unpublished' );
+				} else {
+					$m_time = $post->post_date;
+					$time = get_post_time( 'G', true, $post, false );
+					if ( ( abs( $t_diff = time() - $time ) ) < DAY_IN_SECONDS ) {
+						if ( $t_diff < 0 )
+							$h_time = sprintf( __( '%s from now' ), human_time_diff( $time ) );
+						else
+							$h_time = sprintf( __( '%s ago' ), human_time_diff( $time ) );
+					} else {
+						$h_time = mysql2date( __( 'Y/m/d' ), $m_time );
+					}
+				}
+				echo $h_time;
+				break;
+
 			case 'title':
-				// @todo; currently is be set in DOM only by xeditable
-				// best option would be to give all of them a return value
-				// example: when using a post-status column you want to refresh
-				// the title column aswell as it contains the post status aswell.
-				// this can only be done if title has it's own manage_value.
+				// Set in DOM
 				break;
 		}
 
@@ -286,6 +321,16 @@ class CACIE_Editable_Model_Media extends CACIE_Editable_Model {
 			 * Default Columns
 			 *
 			 */
+			case 'date':
+				// preserve the original time
+				$time = strtotime("1970-01-01 " . date( 'H:i:s', strtotime( $post->post_date ) ) );
+
+				wp_update_post( array(
+					'ID' => $post->ID,
+					'edit_date' => 1, // needed for GMT date
+					'post_date' => date( 'Y-m-d H:i:s', strtotime( $value ) + $time )
+				));
+				break;
 
 			/**
 			 * Custom Columns

@@ -868,9 +868,15 @@ jQuery.fn.cacie_xeditable = function( args, column, item ) {
 	}
 
 	if ( typeof column.addon_cacie.editable.range_step != 'undefined' ) {
+		var step = 'any';
+
+		if ( column.addon_cacie.editable.range_step.length > 0 && column.addon_cacie.editable.range_step != 'any' ) {
+			step = parseFloat( column.addon_cacie.editable.range_step, 10 );
+		}
+
 		htmlatts.push( {
 			key: 'step',
-			value: parseFloat( column.addon_cacie.editable.range_step, 10 )
+			value: step
 		} );
 	}
 
@@ -1214,6 +1220,8 @@ jQuery.fn.cacie_handle_actions = function( column, item ) {
 	}
 };
 
+
+
 /*
  * Init
  */
@@ -1226,7 +1234,7 @@ function cacie_init() {
 	window.cacie_edit_enabled = 1;
 
 	// Items table/container to apply editability on
-	var list = jQuery( '#the-list' );
+	var list = jQuery( CACIE_List_Selector );
 
 	// Readability
 	var columns = CACIE_Columns;
@@ -1322,7 +1330,7 @@ function cacie_enable() {
 		jQuery( window.xeditables ).editable('enable');
 	}
 
-	jQuery('#the-list').addClass('cacie-enabled');
+	jQuery(CACIE_List_Selector).addClass('cacie-enabled');
 	window.cacie_edit_enabled = 1;
 }
 
@@ -1333,7 +1341,7 @@ function cacie_disable() {
 	jQuery('#cacie-toggle-edit').removeClass('active');
 	jQuery( window.xeditables ).editable('disable');
 	window.cacie_edit_enabled = 0; // disable click events
-	jQuery('#the-list').removeClass('cacie-enabled');
+	jQuery(CACIE_List_Selector).removeClass('cacie-enabled');
 }
 
 /*

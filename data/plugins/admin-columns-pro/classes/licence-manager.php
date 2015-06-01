@@ -15,15 +15,15 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 	 */
 	class Codepress_Licence_Manager {
 
-        /**
-         * Endpoint to access API over plain http
-         *
-         * @since 3.1.2
-         * @var type string
-         */
-        private $nossl_endpoint;
+		/**
+		 * Endpoint to access API over plain http
+		 *
+		 * @since 3.1.2
+		 * @var type string
+		 */
+		private $nossl_endpoint;
 
-        /**
+		/**
 		 * Licence Key
 		 *
 		 * @since 1.1
@@ -34,7 +34,7 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 		 * API object
 		 *
 		 * @since 1.1
-         * @var type ACP_API
+		 * @var type ACP_API
 		 */
 		public $api;
 
@@ -64,8 +64,8 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 			// Init API
 			$this->set_api();
 
-            // reflect API settings within the update request
-            add_filter( 'http_request_args', array( $this, 'use_api_http_request_args_for_plugin_update'), 10, 2 );
+			// reflect API settings within the update request
+			add_filter( 'http_request_args', array( $this, 'use_api_http_request_args_for_plugin_update'), 10, 2 );
 
 			// Hook into WP update process
 			add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'update_check' ) );
@@ -76,19 +76,19 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 			// Activate licence on plugin install
 			register_activation_hook( $file_path, array( $this, 'auto_activate_licence' ) );
 
-            $this->register_nossl_endpoint();
+			$this->register_nossl_endpoint();
 		}
 
-        /**
-         * Register endpoint to access API over plain http
-         *
-         * @since 3.1.2
-         */
-        private function register_nossl_endpoint() {
-            $this->nossl_endpoint = 'cac-api-nossl';
+		/**
+		 * Register endpoint to access API over plain http
+		 *
+		 * @since 3.1.2
+		 */
+		private function register_nossl_endpoint() {
+			$this->nossl_endpoint = 'cac-api-nossl';
 
-            add_rewrite_rule( '^' . $this->nossl_endpoint . '/?$', 'index.php', 'top' );
-        }
+			add_rewrite_rule( '^' . $this->nossl_endpoint . '/?$', 'index.php', 'top' );
+		}
 
 		/**
 		 * Overwrite by child class
@@ -109,8 +109,8 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 		}
 
 		/**
-         * Setup an API object
-         *
+		 * Setup an API object
+		 *
 		 * @since 1.1
 		 */
 		private function set_api() {
@@ -121,36 +121,36 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 			$url = apply_filters( 'cac/api/url', 'https://www.admincolumns.com' );
 
 			// change the scheme to access the API via http
-	        if ( ! apply_filters( 'cac/api/secure', true ) ) {
-	            $url =  set_url_scheme( $url, 'http' ) . '/' . $this->nossl_endpoint;
-	        }
+			if ( ! apply_filters( 'cac/api/secure', true ) ) {
+				$url =  set_url_scheme( $url, 'http' ) . '/' . $this->nossl_endpoint;
+			}
 
 			$this->api
-                ->set_url( $url )
-                ->set_request_arg( 'sslverify', $this->is_ssl_enabled() );
+				->set_url( $url )
+				->set_request_arg( 'sslverify', $this->is_ssl_enabled() );
 		}
 
-        /**
-         * Tries to match API settings with the update request
-         *
-         * @since 3.1.2
-         * @param array $r
-         * @param string $url
-         * @return array
-         */
-        public function use_api_http_request_args_for_plugin_update( $r, $url ) {
+		/**
+		 * Tries to match API settings with the update request
+		 *
+		 * @since 3.1.2
+		 * @param array $r
+		 * @param string $url
+		 * @return array
+		 */
+		public function use_api_http_request_args_for_plugin_update( $r, $url ) {
 
-        	// only applies to api URL domain
-            if ( 0 === strpos( $url, $this->api->get_url() ) ) {
-                $api_args = $this->api->get_request_args();
+			// only applies to api URL domain
+			if ( 0 === strpos( $url, $this->api->get_url() ) ) {
+				$api_args = $this->api->get_request_args();
 
-                if ( isset( $api_args['sslverify'] ) ) {
-                    $r['sslverify'] = $api_args['sslverify'];
-                }
-            }
+				if ( isset( $api_args['sslverify'] ) ) {
+					$r['sslverify'] = $api_args['sslverify'];
+				}
+			}
 
-            return $r;
-        }
+			return $r;
+		}
 
 		/**
 		 * @since 1.1
@@ -173,23 +173,44 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 		}
 
 		/**
+		 * Update expiration date & renewal discount
+		 *
+		 * @since 3.4.3
+		 */
+		public function update_license_details() {
+			$response = $this->api->get_license_details( $this->get_licence_key() );
+
+			if ( isset( $response->expiry_date ) ) {
+				$this->store_license_expiry_date( $response->expiry_date );
+			}
+			if ( isset( $response->renewal_discount ) ) {
+				$this->store_license_renewal_discount( $response->renewal_discount );
+			}
+		}
+
+		/**
 		 * @since 1.0
 		 * @param string $licence_key Licence Key
 		 * @return object Response
 		 */
 		public function activate_licence( $licence_key ) {
 
-			// get licence status
 			$response = $this->api->activate_licence( $licence_key );
 
-			// delete licence
 			$this->delete_licence_key();
 			$this->delete_licence_status();
 
-			// Succes
 			if ( isset( $response->activated ) ) {
 				$this->store_licence_key( $licence_key );
-				$this->store_licence_status( true );
+				$this->store_licence_status( 'active' );
+
+				if ( isset( $response->expiry_date ) ) {
+					$this->store_license_expiry_date( $response->expiry_date );
+				}
+				if ( isset( $response->renewal_discount ) ) {
+					$this->store_license_renewal_discount( $response->renewal_discount );
+				}
+
 				$this->purge_plugin_transients();
 			}
 
@@ -212,12 +233,11 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 		 */
 		public function deactivate_licence() {
 
-			// get licence status
 			$response = $this->api->deactivate_licence( $this->get_licence_key() );
 
-			// delete licence
 			$this->delete_licence_key();
 			$this->delete_licence_status();
+			$this->delete_license_expiry_date();
 
 			return $response;
 		}
@@ -281,7 +301,7 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 			// Maybe create wp_error object
 			$plugin_install = $this->maybe_unflatten_wp_error( $plugin_install );
 
-		    return $plugin_install;
+			return $plugin_install;
 		}
 
 		/**
@@ -311,7 +331,7 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 
 			$plugin_update = $this->maybe_unflatten_wp_error( $plugin_update );
 
-		    return $plugin_update;
+			return $plugin_update;
 		}
 
 		/**
@@ -342,7 +362,7 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 
 			$plugin_details = $this->maybe_unflatten_wp_error( $plugin_details );
 
-		    return $plugin_details;
+			return $plugin_details;
 		}
 
 		/**
@@ -371,7 +391,7 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 				$transient->response[ $this->basename ] = $plugin_data;
 			}
 
-		    return $transient;
+			return $transient;
 		}
 
 		/**
@@ -379,7 +399,7 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 		 * @return void
 		 */
 		public function auto_activate_licence() {
-			if ( ! $this->get_licence_status() && ( $licence = $this->get_licence_key() ) ) {
+			if ( ! $this->is_license_active() && ( $licence = $this->get_licence_key() ) ) {
 				$this->activate_licence( $licence );
 			}
 		}
@@ -424,19 +444,24 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 		}
 
 		public function get_licence_status() {
-			return get_option( $this->option_key . '_sts' ) ? true : false;
+			return get_option( $this->option_key . '_sts' );
+		}
+
+		public function is_license_active() {
+			$status = $this->get_licence_status();
+			return true === $status || '1' === $status || 'active' === $status;
 		}
 
 		public function store_licence_key( $licence_key ) {
 			update_option( $this->option_key, $licence_key );
 		}
 
-		public function store_licence_status( $status ) {
-			update_option( $this->option_key . '_sts', $status );
-		}
-
 		public function delete_licence_key() {
 			delete_option( $this->option_key );
+		}
+
+		public function store_licence_status( $status ) {
+			update_option( $this->option_key . '_sts', $status ); // status is 'true' or 'expired'
 		}
 
 		public function delete_licence_status() {
@@ -457,12 +482,57 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 			$this->purge_plugin_transients(); // for updater
 		}
 
+		public function get_license_expiry_date() {
+			$expiry_date = get_option( $this->option_key . '_expiry_date' );
+
+			if ( ! is_int( $expiry_date ) ) {
+				$expiry_date = strtotime( $expiry_date );
+			}
+
+			return $expiry_date;
+		}
+
+		public function store_license_expiry_date( $renewal_date ) {
+			update_option( $this->option_key . '_expiry_date', $renewal_date );
+		}
+
+		public function delete_license_expiry_date() {
+			delete_option( $this->option_key . '_expiry_date' );
+		}
+
+		public function get_license_renewal_discount() {
+			return get_option( $this->option_key . '_renewal_discount' );
+		}
+
+		public function store_license_renewal_discount( $renewal_discount ) {
+			update_option( $this->option_key . '_renewal_discount', $renewal_discount );
+		}
+
+		public function delete_license_renewal_discount() {
+			delete_option( $this->option_key . '_renewal_discount' );
+		}
+
+		public function get_days_to_expiry() {
+			$days = false;
+
+			if ( $this->is_license_active() && ( $expiry_date = $this->get_license_expiry_date() ) ) {
+				$days = floor( ( $expiry_date - time() ) / 86400 );
+			}
+
+			return $days;
+		}
+
+		public function is_license_expired() {
+			$days = $this->get_days_to_expiry();
+			return false !== $days && $days <= 0;
+		}
+
 		/**
 		 * Flatten WP_Error object for storage in transient
 		 *
 		 * @param object $wp_error WP_Error object
 		 * @return $error Error Object
-	 	 */
+		 */
 		public function flatten_wp_error( $wp_error ) {
 			$error = false;
 
@@ -483,7 +553,7 @@ if ( ! class_exists( 'Codepress_Licence_Manager' ) ) {
 		 *
 		 * @param mixed $maybe_error stdClass
 		 * @return $wp_error WP_Error Object
-	 	 */
+		 */
 		public function maybe_unflatten_wp_error( $maybe_error ) {
 			if ( isset( $maybe_error->error ) && isset( $maybe_error->message ) ) {
 				$maybe_error = new WP_Error( $maybe_error->code, $maybe_error->message );

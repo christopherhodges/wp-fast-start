@@ -3,6 +3,7 @@
 class CPAC_Storage_Model_Taxonomy extends CPAC_Storage_Model {
 
 	public $taxonomy;
+	public $taxonomy_object;
 
 	/**
 	 * Constructor
@@ -11,12 +12,15 @@ class CPAC_Storage_Model_Taxonomy extends CPAC_Storage_Model {
 	 */
 	function __construct( $taxonomy ) {
 
-		$this->key 		 = 'wp-taxonomy_' . $taxonomy;
-		$this->type 	 = 'taxonomy';
-		$this->page 	 = 'edit-tags';
-		$this->taxonomy  = $taxonomy;
-		$this->label 	 = $this->get_label();
-		$this->menu_type = $this->type;
+		$this->set_taxonomy_object( $taxonomy );
+
+		$this->key 		 		= 'wp-taxonomy_' . $taxonomy;
+		$this->type 	 		= 'taxonomy';
+		$this->page 	 		= 'edit-tags';
+		$this->taxonomy  		= $taxonomy;
+		$this->label 	 		= $this->taxonomy_object->labels->name;
+		$this->singular_label 	= $this->taxonomy_object->labels->singular_name;
+		$this->menu_type 		= $this->type;
 
 		// headings
 		add_filter( "manage_edit-{$this->taxonomy}_columns",  array( $this, 'add_headings' ) );
@@ -25,6 +29,17 @@ class CPAC_Storage_Model_Taxonomy extends CPAC_Storage_Model {
 		add_action( "manage_{$this->taxonomy}_custom_column", array( $this, 'manage_value' ), 10, 3 );
 
 		parent::__construct();
+	}
+
+	/**
+	 * Get taxonomy
+	 *
+	 * @since 3.5
+	 *
+	 * @return string Taxonomy name
+	 */
+	public function set_taxonomy_object( $taxonomy ) {
+		$this->taxonomy_object = get_taxonomy( $taxonomy );
 	}
 
 	/**
@@ -48,19 +63,6 @@ class CPAC_Storage_Model_Taxonomy extends CPAC_Storage_Model {
 	 */
 	public function get_taxonomy() {
 		return $this->taxonomy;
-	}
-
-	/**
-	 * Get Label
-	 *
-	 * @since 1.2.0
-	 *
-	 * @return string Singular taxonomy name
-	 */
-	private function get_label() {
-		$taxonomy = get_taxonomy( $this->taxonomy );
-
-		return $taxonomy->labels->singular_name;
 	}
 
 	/**

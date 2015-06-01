@@ -70,23 +70,20 @@ class CAC_Sortable_Model_Link extends CAC_Sortable_Model {
 		if ( 'link-manager.php' !== $pagenow )
 			return $results;
 
-		// apply sorting preference
-		$this->apply_sorting_preference( $vars );
+		$vars = $this->apply_sorting_preference( $vars );
 
-		// no sorting
-		if ( empty( $vars['orderby'] ) )
+		if ( empty( $vars['orderby'] ) ) {
 			return $results;
+		}
 
-		// Column
 		$column = $this->get_column_by_orderby( $vars['orderby'] );
 
-		if ( empty( $column ) )
+		if ( empty( $column ) ) {
 			return $results;
+		}
 
-		// unsorted Posts
-		$posts = array();
+		$posts = array(); // unsorted Posts
 
-		// var
 		$length = '';
 
 		switch ( $column->properties->type ) :

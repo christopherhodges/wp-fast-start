@@ -123,7 +123,7 @@ class CACIE_Addon_InlineEdit {
 
 		global $pagenow;
 
-		$columns_screen = in_array( $pagenow, array( 'edit.php', 'users.php', 'upload.php', 'edit-tags.php' ) );
+		$columns_screen = in_array( $pagenow, array( 'edit.php', 'users.php', 'upload.php', 'edit-tags.php', 'edit-comments.php' ) );
 
 		/**
 		 * Filter whether the current screen is a columns screen for which inline edit is available (i.e. a content overview page)
@@ -242,7 +242,6 @@ class CACIE_Addon_InlineEdit {
 
 		// Posts
 		include_once 'classes/post.php';
-
 		if ( $post_types = $this->cpac->get_post_types() ) {
 			foreach ( $post_types as $post_type ) {
 				if ( $storage_model = $this->cpac->get_storage_model( $post_type ) ) {
@@ -253,27 +252,30 @@ class CACIE_Addon_InlineEdit {
 
 		// Users
 		include_once 'classes/user.php';
-
 		if ( $storage_model = $this->cpac->get_storage_model( 'wp-users' ) ) {
 			new CACIE_Editable_Model_User( $storage_model );
 		}
 
 		// Media
 		include_once 'classes/media.php';
-
 		if ( $storage_model = $this->cpac->get_storage_model( 'wp-media' ) ) {
 			new CACIE_Editable_Model_Media( $storage_model );
 		}
 
-		// Media
+		// Taxonomy
 		include_once 'classes/taxonomy.php';
-
 		if ( $taxonomies = $this->cpac->get_taxonomies() ) {
 			foreach ( $taxonomies as $taxonomy ) {
 				if ( $storage_model = $this->cpac->get_storage_model( 'wp-taxonomy_' . $taxonomy ) ) {
 					new CACIE_Editable_Model_Taxonomy( $storage_model );
 				}
 			}
+		}
+
+		// Comment
+		include_once 'classes/comment.php';
+		if ( $storage_model = $this->cpac->get_storage_model( 'wp-comments' ) ) {
+			new CACIE_Editable_Model_Comment( $storage_model );
 		}
 	}
 
