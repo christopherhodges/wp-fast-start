@@ -1,0 +1,84 @@
+#gallery_image_size,#gallery_image_padding{
+    width: 330px;
+    float: left;
+}
+
+#gallery_image_padding{
+    margin-left: 20px;
+}
+
+#gallery_image_size ul, #gallery_image_padding ul{
+    margin: 0;
+    list-style: none;
+}
+
+.gallery_image_size,.gallery_image_padding{
+    position: relative;
+    left: 0;
+    transition: left ease-in-out .18s;
+    border: none;
+    border-bottom: 1px solid #dfdfdf;
+    margin: 0;
+}
+
+.gallery_image_size .wpmf-section-title,.gallery_image_padding .wpmf-section-title{
+    position: relative;
+    left: 0;
+    color: #555;
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    border-left: none;
+    border-right: none;
+    padding: 10px 10px 11px 14px;
+    line-height: 21px;
+    cursor: pointer;
+}
+
+.content_list_sizes, .content_list_padding{
+    padding: 10px 20px 15px;
+    overflow: hidden;
+    background: #fff;
+}
+
+#setting-error-settings_updated{
+    display: none;
+}
+
+.padding_gallery{
+    height: 30px;
+}
+
+.content_list_padding span{
+    text-transform: uppercase;
+    float: left;
+    width: 100%;
+}
+
+.usegellery{
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    float: left;
+    margin-bottom: 15px;
+}
+
+.usegellery label.title{
+    vertical-align: top;
+    text-align: left;
+    line-height: 1.3;
+    font-weight: 600;
+}
+
+.btngallery{
+    background: #fff;
+    padding: 6px 0px 6px 0px;
+    float: left;
+    cursor: pointer;
+    margin-bottom: 20px;
+    font-weight: 400;
+    vertical-align: middle;
+    text-align: center;
+    margin: 0px 15px 0px 15px !important;
+    margin-left: 20px;
+}
