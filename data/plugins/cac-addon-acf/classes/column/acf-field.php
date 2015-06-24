@@ -45,12 +45,24 @@ abstract class CPAC_ACF_Column_ACF_Field extends CPAC_Column {
 	public function get_field_type() {
 
  		$field = $this->get_field();
-
  		if ( ! isset( $field['type'] ) ) {
  			return false;
  		}
-
 		return $field['type'];
+	}
+
+	/**
+	 * Get field label from linked ACF field
+	 *
+	 * @since 1.3
+	 */
+	public function get_field_label() {
+
+ 		$field = $this->get_field();
+ 		if ( ! isset( $field['label'] ) ) {
+ 			return false;
+ 		}
+		return $field['label'];
 	}
 
 	/**
@@ -101,6 +113,9 @@ abstract class CPAC_ACF_Column_ACF_Field extends CPAC_Column {
 		elseif ( 'user' == $this->storage_model->type ) {
 			$id = 'user_' . $id;
 		}
+		elseif ( 'comment' == $this->storage_model->type ) {
+			$id = 'comment_' . $id;
+		}
 		return $id;
 	}
 
@@ -114,6 +129,7 @@ abstract class CPAC_ACF_Column_ACF_Field extends CPAC_Column {
 		if ( $rawvalue === false || $rawvalue === NULL ) {
 			$rawvalue = '';
 		}
+
 		return $rawvalue;
 	}
 

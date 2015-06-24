@@ -1,17 +1,19 @@
 <?php
 /*
 Plugin Name: 		Admin Columns - WooCommerce add-on
-Version: 			1.1
+Version: 			1.2
 Description: 		Enhance your product and order overviews with new columns, and edit products directly from the overview page. WooCommerce integration Add-on for Admin Columns Pro.
 Author: 			Codepress
 Author URI: 		http://admincolumns.com
 Text Domain: 		cpac
 */
 
-if ( ! defined( 'ABSPATH' ) ) exit; // Exit when accessed directly
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit when accessed directly
+}
 
 // Plugin information
-define( 'CAC_WC_VERSION',	'1.1' );
+define( 'CAC_WC_VERSION',	'1.2' );
 define( 'CAC_WC_FILE',		__FILE__ );
 define( 'CAC_WC_URL',		plugin_dir_url( __FILE__ ) );
 define( 'CAC_WC_DIR',		plugin_dir_path( __FILE__ ) );
@@ -40,6 +42,22 @@ class CPAC_Addon_WC {
 	private $plugin_basename;
 
 	/**
+	 * WooCommerce posttypes
+	 *
+	 * @since 1.2
+	 * @var array
+	 */
+	private $post_types;
+
+	/**
+	 * WooCommerce taxonomies
+	 *
+	 * @since 1.2
+	 * @var array
+	 */
+	private $taxonomies;
+
+	/**
 	 * Constructor
 	 *
 	 * @since 1.0
@@ -48,14 +66,23 @@ class CPAC_Addon_WC {
 
 		$this->plugin_basename = plugin_basename( __FILE__ );
 
+		// translations
+		load_plugin_textdomain( 'cpac', false, dirname( $this->plugin_basename ) . '/languages/' );
+
+		// set wc post types
+		$this->post_types = array( 'product', 'shop_order', 'shop_coupon' );
+		$this->taxonomies = array( 'product_cat', 'product_tag', 'product_shipping_class' );
+
 		// Admin Columns-dependent setup
 		add_action( 'cac/loaded', array( $this, 'init' ) );
 
 		// Hooks
-		add_filter( 'cac/storage_model/column_type_groups', array( $this, 'column_type_groups' ), 10, 2 );
-		add_filter( 'cac/columns/custom', array( $this, 'add_columns' ), 10, 2 );
-		add_filter( 'cac/columns/registered/default', array( $this, 'group_default_woocommerce_column_types' ), 10, 2 );
 		add_action( 'after_plugin_row_' . $this->plugin_basename, array( $this, 'display_plugin_row_notices' ), 11 );
+		add_filter( 'cac/storage_model/column_type_groups', array( $this, 'column_type_groups' ), 10, 2 );
+		add_filter( 'cac/columns/registered/default', array( $this, 'group_default_woocommerce_column_types' ), 10, 2 );
+		add_filter( 'cac/columns/custom', array( $this, 'add_columns' ), 10, 2 );
+		add_filter( 'cac/storage_models', array( $this, 'set_menu_type' ) );
+		add_filter( 'cac/menu_types', array( $this, 'add_menu_type' ) );
 	}
 
 	/**
@@ -63,7 +90,7 @@ class CPAC_Addon_WC {
 	 *
 	 * @since 1.0
 	 */
-	function init( $cpac ) {
+	public function init( $cpac ) {
 
 		// Store CPAC object
 		$this->cpac = $cpac;
@@ -73,6 +100,40 @@ class CPAC_Addon_WC {
 
 		// Setup callback
 		$this->after_setup();
+	}
+
+	/**
+	 * @since 1.2
+	 */
+	public function add_menu_type( $menu_types ) {
+
+		$menu_types['woocommerce'] = __( 'WooCommerce', 'cpac' );
+		//$menu_types['woocommerce_tax'] = __( 'WC Taxonomy', 'cpac' );
+		return $menu_types;
+	}
+
+	/**
+	 * Set the menu type to woocommerce
+	 *
+	 * @since 1.2
+	 */
+	public function set_menu_type( $storage_models ) {
+
+		if ( $this->is_woocommerce_active() ) {
+			foreach ( $storage_models as $k => $storage_model ) {
+
+				// WC posttypes
+				if ( in_array( $storage_model->get_post_type(), $this->post_types ) ) {
+					$storage_models[ $k ] = $storage_model->set_menu_type( 'woocommerce' );
+				}
+
+				// WC taxonomies
+				/*if ( method_exists( $storage_model, 'get_taxonomy' ) && in_array( $storage_model->get_taxonomy(), $this->taxonomies ) ) {
+					$storage_models[ $k ] = $storage_model->set_menu_type( 'woocommerce_tax' );
+				}*/
+			}
+		}
+		return $storage_models;
 	}
 
 	/**
@@ -90,9 +151,7 @@ class CPAC_Addon_WC {
 					'column-wc-stock' => 'is_in_stock'
 				);
 
-				$types = array( 'product', 'shop_order', 'shop_coupon' );
-
-				foreach ( $types as $type ) {
+				foreach ( $this->post_types as $type ) {
 					if ( $columns = get_option( 'cpac_options_' . $type ) ) {
 						foreach ( $columns as $index => $column ) {
 							if ( isset( $mappings[ $column['type'] ] ) ) {
@@ -134,10 +193,12 @@ class CPAC_Addon_WC {
 	 */
 	public function column_type_groups( $groups, $storage_model_instance ) {
 
-		$groups = array_merge( array(
-				'woocommerce-default' => __( 'Default', 'cpac' ),
-				'woocommerce-custom' => __( 'WooCommerce Custom', 'cpac' )
-			), $groups );
+		if ( $this->is_woocommerce_active() ) {
+			$groups = array_merge( array(
+					'woocommerce-default' => __( 'Default', 'cpac' ),
+					'woocommerce-custom' => __( 'WooCommerce Custom', 'cpac' )
+				), $groups );
+		}
 
 		return $groups;
 	}
@@ -151,19 +212,24 @@ class CPAC_Addon_WC {
 
 		if ( $this->is_woocommerce_active() ) {
 
+			require_once CAC_WC_DIR . 'classes/column/wc-column.php';
+
 			// Product columns
 			if ( 'product' == $storage_model->key ) {
 				$columns['CPAC_WC_Column_Post_Reviews_Enabled'] = CAC_WC_DIR . 'classes/column/product/reviews-enabled.php';
+				$columns['CPAC_WC_Column_Post_Featured'] = CAC_WC_DIR . 'classes/column/product/featured.php';
 				$columns['CPAC_WC_Column_Post_Weight'] = CAC_WC_DIR . 'classes/column/product/weight.php';
 				$columns['CPAC_WC_Column_Post_Dimensions'] = CAC_WC_DIR . 'classes/column/product/dimensions.php';
 				$columns['CPAC_WC_Column_Post_Backorders_Allowed'] = CAC_WC_DIR . 'classes/column/product/backorders-allowed.php';
 				$columns['CPAC_WC_Column_Post_Order_Count'] = CAC_WC_DIR . 'classes/column/product/order-count.php';
 				$columns['CPAC_WC_Column_Post_Order_Total'] = CAC_WC_DIR . 'classes/column/product/order-total.php';
 				$columns['CPAC_WC_Column_Post_Price'] = CAC_WC_DIR . 'classes/column/product/price.php';
+				$columns['CPAC_WC_Column_Post_Shipping_Class'] = CAC_WC_DIR . 'classes/column/product/shipping-class.php';
 				$columns['CPAC_WC_Column_Post_SKU'] = CAC_WC_DIR . 'classes/column/product/sku.php';
 				$columns['CPAC_WC_Column_Post_Stock'] = CAC_WC_DIR . 'classes/column/product/stock.php';
 				$columns['CPAC_WC_Column_Post_Stock_Status'] = CAC_WC_DIR . 'classes/column/product/stock-status.php';
 				$columns['CPAC_WC_Column_Post_Upsells'] = CAC_WC_DIR . 'classes/column/product/upsells.php';
+				$columns['CPAC_WC_Column_Post_Visibility'] = CAC_WC_DIR . 'classes/column/product/visibility.php';
 				$columns['CPAC_WC_Column_Post_Thumb'] = CAC_WC_DIR . 'classes/column/product/thumb.php';
 				$columns['CPAC_WC_Column_Post_Crosssells'] = CAC_WC_DIR . 'classes/column/product/crosssells.php';
 				$columns['CPAC_WC_Column_Post_Product_Type'] = CAC_WC_DIR . 'classes/column/product/product-type.php';
@@ -253,7 +319,7 @@ class CPAC_Addon_WC {
 	 */
 	public function is_woocommerce_active() {
 
-		return class_exists( 'WooCommerce' );
+		return class_exists( 'WooCommerce', false );
 	}
 
 	/**

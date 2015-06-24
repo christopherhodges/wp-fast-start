@@ -41,6 +41,13 @@ class CPAC_ACF_Column_ACF_Field_ACF5 extends CPAC_ACF_Column_ACF_Field {
 	}
 
 	/**
+	 * @since 1.3
+	 */
+	public function sort_by_label( $a, $b ) {
+		return ( $a['label'] == $b['label'] ) ? 0 : ( ( $a['label'] < $b['label'] ) ? -1 : 1 );
+	}
+
+	/**
 	 * @see CPAC_Column::display_settings()
 	 * @since 1.0
 	 */
@@ -154,6 +161,11 @@ class CPAC_ACF_Column_ACF_Field_ACF5 extends CPAC_ACF_Column_ACF_Field {
 					'options' 	=> $options
 				);
 			}
+		}
+
+		// sort field by option label
+		foreach ( $optiongroups as $k => $optiongroup ) {
+			uasort( $optiongroups[ $k ]['options'], array( $this, 'sort_by_label' ) );
 		}
 		?>
 

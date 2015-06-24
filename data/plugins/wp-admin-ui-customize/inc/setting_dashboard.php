@@ -11,14 +11,14 @@ wp_enqueue_style( $this->PageSlug , $this->Url . $this->PluginSlug . '.css', arr
 ?>
 
 <div class="wrap">
-	<div class="icon32" id="icon-tools"></div>
+
 	<?php echo $this->Msg; ?>
 	<h2><?php _e( 'Dashboard' ); ?><?php _e( 'Settings' ); ?></h2>
 	<p>&nbsp;</p>
 
 	<h3 id="wauc-apply-user-roles"><?php echo $this->get_apply_roles(); ?></h3>
 
-	<form id="wauc_setting_dashboard" class="wauc_form" method="post" action="<?php echo remove_query_arg( 'wauc_msg' , add_query_arg( array( 'page' => $this->PageSlug ) ) ); ?>">
+	<form id="wauc_setting_dashboard" class="wauc_form" method="post" action="<?php echo esc_url( remove_query_arg( 'wauc_msg' , add_query_arg( array( 'page' => $this->PageSlug ) ) ) ); ?>">
 		<input type="hidden" name="<?php echo $this->UPFN; ?>" value="Y" />
 		<?php wp_nonce_field( $this->Nonces["value"] , $this->Nonces["field"] ); ?>
 		<input type="hidden" name="record_field" value="dashboard" />
@@ -34,22 +34,8 @@ wp_enqueue_style( $this->PageSlug , $this->Url . $this->PluginSlug . '.css', arr
 							<h3 class="hndle"><span><?php _e( 'Meta boxes' , $this->ltd ); ?></span></h3>
 							<div class="inside">
 							
-								<?php if( empty( $Metaboxes["metaboxes"]["dashboard"] ) ) : ?>
+								<?php if( !empty( $Metaboxes["metaboxes"]["dashboard"] ) ) : ?>
 			
-									<?php $load_link = self_admin_url( 'index.php' ); ?>
-
-									<p>
-										<a href="<?php echo $load_link; ?>" class="button button-primary column_load">
-											<?php echo sprintf( __( 'Metaboxes loading for %s', $this->ltd ) , __( 'Dashboard' ) ); ?>
-										</a>
-									</p>
-									<p class="loading">
-										<span class="spinner"></span>
-										<?php _e( 'Loading&hellip;' ); ?>
-									</p>
-								
-								<?php else: ?>
-
 										<table class="form-table">
 											<thead>
 												<tr>
@@ -102,6 +88,18 @@ wp_enqueue_style( $this->PageSlug , $this->Url . $this->PluginSlug . '.css', arr
 
 								<?php endif; ?>
 
+									<?php $load_link = self_admin_url( 'index.php' ); ?>
+
+									<p>
+										<a href="<?php echo $load_link; ?>" class="button button-primary column_load">
+											<?php echo sprintf( __( 'Metaboxes loading for %s', $this->ltd ) , __( 'Dashboard' ) ); ?>
+										</a>
+									</p>
+									<p class="loading">
+										<span class="spinner"></span>
+										<?php _e( 'Loading&hellip;' ); ?>
+									</p>
+
 							</div>
 						</div>
 			
@@ -148,6 +146,18 @@ wp_enqueue_style( $this->PageSlug , $this->Url . $this->PluginSlug . '.css', arr
 
 </div>
 
+<style>
+.form-table td {
+	vertical-align: top;
+}
+.inside .loading {
+	display: none;
+}
+.inside .loading .spinner {
+	float: left;
+    visibility: visible;
+}
+</style>
 <script type="text/javascript">
 jQuery(document).ready(function($) {
 

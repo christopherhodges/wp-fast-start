@@ -10,12 +10,12 @@ wp_enqueue_style( $this->PageSlug , $this->Url . $this->PluginSlug . '.css', arr
 
 ?>
 <div class="wrap">
-	<div class="icon32" id="icon-tools"></div>
+
 	<?php echo $this->Msg; ?>
 	<h2><?php _e( 'Reset User Roles' , $this->ltd ); ?></h2>
 	<p>&nbsp;</p>
 
-	<form id="wauc_reset_userrole" class="wauc_form" method="post" action="<?php echo remove_query_arg( 'wauc_msg' , add_query_arg( array( 'page' => $this->PageSlug ) ) ); ?>">
+	<form id="wauc_reset_userrole" class="wauc_form" method="post" action="<?php echo esc_url( remove_query_arg( 'wauc_msg' , add_query_arg( array( 'page' => $this->PageSlug ) ) ) ); ?>">
 		<input type="hidden" name="<?php echo $this->UPFN; ?>" value="Y" />
 		<?php wp_nonce_field( $this->Nonces["value"] , $this->Nonces["field"] ); ?>
 		<input type="hidden" name="record_field" value="user_role" />
@@ -40,7 +40,7 @@ wp_enqueue_style( $this->PageSlug , $this->Url . $this->PluginSlug . '.css', arr
 	<p>&nbsp;</p>
 
 	<h2><?php _e( 'Reset settings of all' , $this->ltd ); ?></h2>
-	<form id="wauc_reset_all_settings" class="wauc_form" method="post" action="<?php echo remove_query_arg( 'wauc_msg' , add_query_arg( array( 'page' => $this->PageSlug ) ) ); ?>">
+	<form id="wauc_reset_all_settings" class="wauc_form" method="post" action="<?php echo esc_url( remove_query_arg( 'wauc_msg' , add_query_arg( array( 'page' => $this->PageSlug ) ) ) ); ?>">
 		<input type="hidden" name="<?php echo $this->UPFN; ?>" value="Y" />
 		<?php wp_nonce_field( $this->Nonces["value"] , $this->Nonces["field"] ); ?>
 		<input type="hidden" name="record_field" value="all_settings" />
@@ -66,5 +66,12 @@ wp_enqueue_style( $this->PageSlug , $this->Url . $this->PluginSlug . '.css', arr
 
 	</form>
 
-
 </div>
+
+<style>
+</style>
+<script>
+jQuery(document).ready( function($) {
+
+});
+</script>

@@ -518,6 +518,10 @@ function delete_task_now($task_name){
 		{
 			$exclude_extensions = array();
 		}
+		else if($exclude_extensions == 'eg. .zip,.mp4')
+		{
+			$exclude_extensions = array();
+		}
 		else
 		{
 			$exclude_extensions_array = explode(",",$exclude_extensions);
@@ -853,7 +857,7 @@ function delete_task_now($task_name){
     		$result = false;
     	}
     	
-    	return $result; // true if $backup_file iz zipped successfully, false if error is occured in zip process
+    	return $result; // true if $backup_file iz zipped successfully, false if error is occurred in zip process
     }
 	
 	/**
@@ -895,7 +899,7 @@ function delete_task_now($task_name){
 		} else {
 			$result = false;
 		}
-		return $result; // true if $backup_file iz zipped successfully, false if error is occured in zip process
+		return $result; // true if $backup_file iz zipped successfully, false if error is occurred in zip process
     }
 	
 	
@@ -1353,12 +1357,12 @@ function iwp_mmb_direct_to_any_copy($source, $destination, $overwrite = false, $
 		
 		/////////////////// dev ////////////////////////
 			
-			
-		if (!$this->is_server_writable()) {
-			  return array(
-				   'error' => 'Failed, please add FTP details', 'error_code' => 'failes_add_ftp_details'
-			 );  
-		} 
+        if (!$this->is_server_writable()) {
+            return array(
+            'error' => 'Failed, please add FTP details', 'error_code' => 'failed_please_add_ftp_details'
+            );
+        }
+
 		
 		$url = wp_nonce_url('index.php?page=iwp_no_page','iwp_fs_cred');
 		ob_start();
@@ -3309,7 +3313,7 @@ function ftp_backup($args)
 		global $wpdb;
 		$table_name = $wpdb->base_prefix . "iwp_backup_status";
 				
-		$rows = $wpdb->get_row($wpdb->prepare("SELECT * FROM ".$table_name." WHERE historyID = %d", $ID), ARRAY_A);
+		$rows = $wpdb->get_row($wpdb->prepare("SELECT * FROM ".$table_name." WHERE historyID = %d ORDER BY ID DESC LIMIT 1", $ID), ARRAY_A);
 		
 		$return = unserialize($rows['taskResults']);
 				
@@ -3833,7 +3837,7 @@ if (!function_exists('get_all_files_from_dir_recursive')) {
 	 * @param 	string 	$path 	Relative or absolute path to folder
 	 * @return 	void
 	 */
-	function get_all_files_from_dir_recursive($path,$ignore_array=array()) {
+	function get_all_files_from_dir_recursive($path) {
 		if ($path[strlen($path) - 1] === "/") $path = substr($path, 0, -1);
 		global $directory_tree, $ignore_array;
 		if(empty($ignore_array))
@@ -3842,19 +3846,23 @@ if (!function_exists('get_all_files_from_dir_recursive')) {
 		}
 		$directory_tree_temp = array();
 		$dh = @opendir($path);
-		
-		while (false !== ($file = @readdir($dh))) {
-				if (!in_array($file, array('.', '..'))) {
-					if (!in_array("$path/$file", $ignore_array)) {
-						if (!is_dir("$path/$file")) {
-							$directory_tree[] = "$path/$file";
-						} else {
-							get_all_files_from_dir_recursive("$path/$file");
+		if($dh !== false){
+			while (false !== ($file = @readdir($dh))) {
+					if (!in_array($file, array('.', '..'))) {
+						if (!in_array("$path/$file", $ignore_array)) {
+							if (!is_dir("$path/$file")) {
+								$directory_tree[] = "$path/$file";
+							} else {
+								get_all_files_from_dir_recursive("$path/$file");
+						}
 					}
 				}
 			}
+			@closedir($dh);
 		}
-		@closedir($dh);
+		else{
+			//code to process openDir failure.
+		}
 	}
 }
 

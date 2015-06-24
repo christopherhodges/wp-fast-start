@@ -6,7 +6,26 @@
             global $wpdb, $wp_locale;
             
             $taxonomy = isset($_GET['taxonomy']) ? $_GET['taxonomy'] : '';
-            $post_type = isset($_GET['post_type']) ? $_GET['post_type'] : 'post';
+            $post_type = isset($_GET['post_type']) ? $_GET['post_type'] : '';
+            if(empty($post_type))
+                {
+                    $screen = get_current_screen();
+                    
+                    if(isset($screen->post_type)    && !empty($screen->post_type))
+                        $post_type  =   $screen->post_type;
+                        else
+                        {
+                            switch($screen->parent_file)
+                                {
+                                    case "upload.php" :
+                                                        $post_type  =   'attachment';
+                                                        break;
+                                                
+                                    default:
+                                                        $post_type  =   'post';   
+                                }
+                        }       
+                } 
                                             
             $post_type_data = get_post_type_object($post_type);
             
@@ -30,11 +49,29 @@
 
                 <div class="clear"></div>
                 
-                <form action="edit.php" method="get" id="to_form">
+                <?php
+                
+                    $current_section_parent_file    =   '';
+                    switch($post_type)
+                        {
+                            
+                            case "attachment" :
+                                            $current_section_parent_file    =   "upload.php";
+                                            break;
+                                            
+                            default :
+                                            $current_section_parent_file    =    "edit.php";
+                                            break;
+                        }
+                
+                
+                ?>
+                
+                <form action="<?php echo $current_section_parent_file ?>" method="get" id="to_form">
                     <input type="hidden" name="page" value="to-interface-<?php echo $post_type ?>" />
                     <?php
                 
-                     if ($post_type != 'post')
+                     if (!in_array($post_type, array('post', 'attachment'))) 
                         echo '<input type="hidden" name="post_type" value="'. $post_type .'" />';
 
                     //output all available taxonomies for this post type
@@ -92,7 +129,7 @@
                                 ?>
                                 </tbody>
                             </table>
-                            <br /><br /> 
+                            <br />
                             <?php
                         }
                             ?>
@@ -163,7 +200,7 @@
                                 var serialize_data = serialize(mySortable);
                                                                                             
                                 jQuery.post( ajaxurl, { action:'update-taxonomy-order', order: serialize_data, taxonomy : '<?php echo  $taxonomy ?>' }, function() {
-                                    jQuery("#ajax-response").html('<div class="message updated fade"><p><?php _e( "Items Order Updates", 'tto' ) ?></p></div>');
+                                    jQuery("#ajax-response").html('<div class="message updated fade"><p><?php _e( "Items Order Updated", 'tto' ) ?></p></div>');
                                     jQuery("#ajax-response div").delay(3000).hide("slow");
                                 });
                             });

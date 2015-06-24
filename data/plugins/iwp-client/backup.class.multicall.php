@@ -575,6 +575,7 @@ class IWP_MMB_Backup_Multicall extends IWP_MMB_Core
 		}
 		else
 		{
+			iwp_mmb_print_flush('DB DUMP PHP CALL COUNT :' . $response_array['callCount']);
 			$callCount = $response_array['callCount'];
 			$backupStage = 'backupDBMultiCall';
 		}
@@ -676,9 +677,10 @@ class IWP_MMB_Backup_Multicall extends IWP_MMB_Core
 			$no_of_cols = count($table_fields);
 			$initialCount = 0;
 			$done_count = 0;
-			$breakingCount = $responseParams['breakingCount'];
-			if(!$breakingCount)
-			{
+			if($left_out_table == $table[0]){
+				$breakingCount = isset($responseParams['breakingCount']) ? $responseParams['breakingCount'] : 0;				//new changes
+			}
+			else{
 				$breakingCount = 0;
 			}
 			if ($count > 100)
@@ -2241,7 +2243,7 @@ class IWP_MMB_Backup_Multicall extends IWP_MMB_Core
 		global $wpdb;
 		$table_name = $wpdb->base_prefix . "iwp_backup_status";
 				
-		$rows = $wpdb->get_row($wpdb->prepare("SELECT * FROM ".$table_name." WHERE historyID = %d", $ID), ARRAY_A);
+		$rows = $wpdb->get_row($wpdb->prepare("SELECT * FROM ".$table_name." WHERE historyID = %d ORDER BY ID DESC LIMIT 1", $ID), ARRAY_A);
 						
 		return $rows;
 		
@@ -2523,7 +2525,7 @@ function task_now($task_name){
 		} else {
 			$result = false;
 		}
-		return $result; // true if $backup_file iz zipped successfully, false if error is occured in zip process
+		return $result; // true if $backup_file iz zipped successfully, false if error is occurred in zip process
     }
 	
 	
@@ -2836,13 +2838,12 @@ function iwp_mmb_direct_to_any_copy($source, $destination, $overwrite = false, $
 		
 		/////////////////// dev ////////////////////////
 		
-		
-		if (!$this->is_server_writable()) {
-			return array(
-			'error' => 'Failed, please add FTP details', 'error_code' => 'failed_please_add_ftp_details'
-			);  
-		} 
-		
+        if (!$this->is_server_writable()) {
+            return array(
+	            'error' => 'Failed, please add FTP details', 'error_code' => 'failed_please_add_ftp_details'
+            );
+        }
+
 		$url = wp_nonce_url('index.php?page=iwp_no_page','iwp_fs_cred');
 		ob_start();
 		if (false === ($creds = request_filesystem_credentials($url, '', false, ABSPATH, null) ) ) {
@@ -3868,7 +3869,7 @@ function ftp_backup($historyID,$args = '')
 		if(!$ret || $ret == FTP_FAILED)
 		{
 			return array(
-                'error' => 'FTP upload Error. ftp_nb_fput(): Append/Restart not permitted.',
+                'error' => "FTP upload Error. ftp_nb_fput(): Append/Restart not permitted. This feature is required for multi-call backup upload via FTP to work. Please contact your WP site's hosting provider and ask them to fix the problem. You can try dropbox, Amazon S3 or Google Driver as an alternative to it.",
                 'partial' => 1, 'error_code' => 'ftp_nb_fput_not_permitted_error'
             );
 		}
@@ -5279,7 +5280,7 @@ function ftp_backup($historyID,$args = '')
 			}
 		}catch (Exception $e){
 			print "An error occurred: " . $e->getMessage();
-			return array('error' => $e->getMessage(), 'error_code' => 'google_error_occured_list_results');
+			return array('error' => $e->getMessage(), 'error_code' => 'google_error_occurred_list_results');
 		}
 		
 		//create sub folder by site name
@@ -6055,61 +6056,5 @@ function ftp_backup($historyID,$args = '')
 /*if( function_exists('add_filter') ){
 	add_filter( 'iwp_website_add', 'IWP_MMB_Backup::readd_tasks' );
 }*/
-
-if(!function_exists('get_all_files_from_dir')) {
-	/**
-	 * Get all files in directory
-	 * 
-	 * @param 	string 	$path 		Relative or absolute path to folder
-	 * @param 	array 	$exclude 	List of excluded files or folders, relative to $path
-	 * @return 	array 				List of all files in folder $path, exclude all files in $exclude array
-	 */
-	function get_all_files_from_dir($path, $exclude = array()) {
-		if ($path[strlen($path) - 1] === "/") $path = substr($path, 0, -1);
-		global $directory_tree, $ignore_array;
-		$directory_tree = array();
-		if(!empty($exclude))
-		{
-			foreach ($exclude as $file) {
-				if (!in_array($file, array('.', '..'))) {
-					if ($file[0] === "/") $path = substr($file, 1);
-					$ignore_array[] = "$path/$file";
-				}
-			}
-		}
-		get_all_files_from_dir_recursive($path);
-		return $directory_tree;
-	}
-}
-
-if (!function_exists('get_all_files_from_dir_recursive')) {
-	/**
-	 * Get all files in directory,
-	 * wrapped function which writes in global variable
-	 * and exclued files or folders are read from global variable
-	 *
-	 * @param 	string 	$path 	Relative or absolute path to folder
-	 * @return 	void
-	 */
-	function get_all_files_from_dir_recursive($path) {
-		if ($path[strlen($path) - 1] === "/") $path = substr($path, 0, -1);
-		global $directory_tree, $ignore_array;
-		$directory_tree_temp = array();
-		$dh = @opendir($path);
-		
-		while (false !== ($file = @readdir($dh))) {
-			if (!in_array($file, array('.', '..'))) {
-				if (!in_array("$path/$file", $ignore_array)) {
-					if (!is_dir("$path/$file")) {
-						$directory_tree[] = "$path/$file";
-					} else {
-						get_all_files_from_dir_recursive("$path/$file");
-					}
-				}
-			}
-		}
-		@closedir($dh);
-	}
-}
 
 ?>

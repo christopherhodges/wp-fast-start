@@ -27,8 +27,10 @@ class CPAC_WC_Column_Post_Weight extends CPAC_Column {
 	 * @since 2.2
 	 */
 	public function apply_conditional() {
-
-		return wc_product_weight_enabled();
+		if ( function_exists( 'wc_product_weight_enabled' ) ) {
+			return wc_product_weight_enabled();
+		}
+		return true;
 	}
 
 	/**
